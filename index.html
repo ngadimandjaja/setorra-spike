@@ -52,6 +52,17 @@ function toLocalInput(iso){if(!iso)return '';var d=new Date(iso);if(isNaN(d))ret
 function fromLocalInput(v){return v?new Date(v).toISOString():''}
 function mb(n){return (n/1048576).toFixed(1)+' MB'}
 function toast(m,e){var t=document.createElement('div');t.className='toast'+(e?' e':'');t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},e?6000:2500)}
+function csvCell(v,safe){v=String(v==null?'':v);if(safe&&/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
+function downloadCSV(name,rows,safe){var t='﻿'+rows.map(function(r){return r.map(function(v){return csvCell(v,safe)}).join(',')}).join('\r\n')+'\r\n';var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},2000)}
+function splitCSVLine(l){var o=[],c='',q=false,d=(l.indexOf('\t')>=0?'\t':((l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?';':','));for(var i=0;i<l.length;i++){var ch=l[i];if(q){if(ch==='"'){if(l[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}else if(ch==='"')q=true;else if(ch===d){o.push(c.trim());c=''}else c+=ch}o.push(c.trim());return o}
+function parseRoster(text){
+  var lines=String(text).replace(/^﻿/,'').split(/\r?\n/).filter(function(l){return l.trim()}),ix={email:0,nim:1,name:2},rows;
+  if(!lines.length)return [];
+  var h=splitCSVLine(lines[0]).map(function(x){return x.toLowerCase()});
+  var ie=h.findIndex(function(x){return /^e-?mail$/.test(x)});
+  if(ie>=0){var inim=h.findIndex(function(x){return /^(nim|id|nim\/id|nim atau id)$/.test(x)}),inm=h.findIndex(function(x){return /^(nama|name|nama lengkap)$/.test(x)});ix={email:ie,nim:inim,name:inm};lines=lines.slice(1)}
+  return lines.map(function(l){var p=splitCSVLine(l);return {email:(p[ix.email]||'').trim(),nim:ix.nim>=0?(p[ix.nim]||''):'',name:ix.name>=0?(p[ix.name]||''):''}}).filter(function(x){return x.email});
+}
 
 // ---------- API ----------
 function api(action,body){
@@ -185,7 +196,8 @@ function tabClasses(c){
     var cls=r[0],mem=r[1];
     var h='<div class="card"><div class="row"><h3 class="grow">Kelas</h3><button id="nc" class="pri sm">+ Kelas</button></div><table><tr><th>Kelas</th><th>Kode gabung</th><th>Kapasitas</th><th></th></tr>'+cls.map(function(k){return '<tr><td>'+esc(k.name)+'</td><td><b>'+esc(k.joinCode)+'</b></td><td>'+mem.filter(function(m){return m.classId===k.id&&m.role==='student'}).length+' / '+k.maxStudents+'</td><td><button class="sm" data-rc="'+esc(k.id)+'">Kode baru</button> <button class="sm" data-cap="'+esc(k.id)+'">Kapasitas</button></td></tr>'}).join('')+'</table>'+
      '<div class="row" style="margin-top:8px"><label style="margin:0"><input type="checkbox" id="jo" style="width:auto" '+(c.joinOpen?'checked':'')+'> Izinkan mahasiswa gabung dengan kode</label></div></div>';
-    h+='<div class="card"><h3>Tambah anggota (tempel daftar)</h3><p class="mut">Satu baris per orang: <code>email, NIM, Nama</code>. Untuk asisten/mentor/reviewer NIM boleh kosong.</p><div class="grid2"><div><label>Peran</label><select id="mr"><option value="student">Mahasiswa</option><option value="assistant">Asisten kelas</option><option value="mentor">Mentor</option><option value="reviewer">Reviewer/penguji</option><option value="lecturer">Dosen pendamping</option></select></div><div><label>Kelas (untuk mahasiswa)</label><select id="mk">'+cls.map(function(k){return '<option value="'+esc(k.id)+'">'+esc(k.name)+'</option>'}).join('')+'</select></div></div><textarea id="ml" placeholder="budi@ukrida.ac.id, 1001, Budi Santoso"></textarea><div class="row"><button class="pri" id="ma">Tambahkan</button></div></div>';
+    h+='<div class="card"><h3>Tambah anggota (tempel daftar)</h3><p class="mut">Satu baris per orang: <code>email, NIM, Nama</code>. Untuk asisten/mentor/reviewer NIM boleh kosong.</p><div class="grid2"><div><label>Peran</label><select id="mr"><option value="student">Mahasiswa</option><option value="assistant">Asisten kelas</option><option value="mentor">Mentor</option><option value="reviewer">Reviewer/penguji</option><option value="lecturer">Dosen pendamping</option></select></div><div><label>Kelas (untuk mahasiswa)</label><select id="mk">'+cls.map(function(k){return '<option value="'+esc(k.id)+'">'+esc(k.name)+'</option>'}).join('')+'</select></div></div><div class="row" style="margin:8px 0"><button class="sm" id="tpl">Unduh template (CSV)</button><label class="sm" style="margin:0;cursor:pointer;border:1px solid #cbd5e1;border-radius:6px;padding:4px 10px">Muat berkas CSV<input type="file" id="mf" accept=".csv,.txt,text/csv" hidden></label><span class="mut">Kolom: email, nim, nama. Baris judul dikenali otomatis.</span></div><textarea id="ml" placeholder="budi@ukrida.ac.id, 1001, Budi Santoso"></textarea><div class="row"><button class="pri" id="ma">Tambahkan</button></div></div>';
+    h+='<div class="card"><h3>Unduh roster</h3><div class="row"><select id="rk" style="max-width:240px"><option value="">Semua kelas</option>'+cls.map(function(k){return '<option value="'+esc(k.id)+'">Kelas '+esc(k.name)+'</option>'}).join('')+'</select><select id="rrl" style="max-width:200px"><option value="student">Mahasiswa saja</option><option value="">Semua peran</option></select><button class="pri" id="rdl">Unduh roster (CSV)</button></div></div>';
     h+='<div class="card"><h3>Anggota</h3><table><tr><th>Nama</th><th>Email</th><th>NIM/ID</th><th>Peran</th><th>Kelas</th><th></th></tr>'+mem.map(function(m){var k=cls.filter(function(x){return x.id===m.classId})[0];return '<tr><td>'+esc(m.name)+'</td><td>'+esc(m.email)+'</td><td>'+esc(m.nim)+'</td><td><span class="tag">'+esc(m.role)+'</span></td><td>'+esc(k?k.name:'-')+'</td><td><button class="sm bad" data-rm="'+esc(m.id)+'">Hapus</button></td></tr>'}).join('')+'</table></div>';
     $('#tb').innerHTML=h;
     $('#nc').onclick=guard(function(){var n=prompt('Nama kelas (mis. A)');if(!n)return;var mx=prompt('Kapasitas mahasiswa',String(c.maxStudents||70));return api('createClass',{courseId:c.id,name:n,maxStudents:Number(mx)||70}).then(function(){route()})});
@@ -193,8 +205,18 @@ function tabClasses(c){
     document.querySelectorAll('[data-cap]').forEach(function(b){b.onclick=guard(function(){var v=prompt('Kapasitas baru');if(!v)return;return api('updateClass',{classId:b.dataset.cap,maxStudents:Number(v)}).then(function(){route()})})});
     document.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=guard(function(){if(!confirm('Hapus anggota ini?'))return;return api('removeMember',{memberId:b.dataset.rm}).then(function(){route()})})});
     $('#jo').onchange=guard(function(){return api('updateCourse',{courseId:c.id,joinOpen:$('#jo').checked}).then(refreshMe)});
+    $('#tpl').onclick=function(){downloadCSV('template-roster-'+(c.code||'mk')+'.csv',[['email','nim','nama'],['contoh1@example.com','2024001','Contoh Nama Satu'],['contoh2@example.com','2024002','Contoh Nama Dua']])};
+    $('#mf').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var l=parseRoster(r.result);$('#ml').value=l.map(function(x){return [x.email,x.nim,x.name].map(function(v){return /[,;\t"]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(', ')}).join('\n');toast(l.length+' baris dimuat. Periksa, lalu klik Tambahkan.')};r.readAsText(f,'utf-8')};
+    $('#rdl').onclick=function(){
+      var kid=$('#rk').value,rl=$('#rrl').value,kn={};cls.forEach(function(k){kn[k.id]=k.name});
+      var rows=mem.filter(function(m){return (!kid||m.classId===kid)&&(!rl||m.role===rl)}).sort(function(a,b){return String(kn[a.classId]||'~').localeCompare(String(kn[b.classId]||'~'))||String(a.nim).localeCompare(String(b.nim),undefined,{numeric:true})||String(a.name).localeCompare(String(b.name))});
+      if(!rows.length)return toast('Tidak ada anggota untuk diunduh',true);
+      var out=[['No','Kelas','NIM/ID','Nama','Email','Peran','Institusi']],n=0;
+      rows.forEach(function(m){out.push([++n,kn[m.classId]||'-',m.nim,m.name,m.email,m.role,m.institution])});
+      var tag=kid?'-kelas'+kn[kid]:'';downloadCSV('roster-'+(c.code||'mk')+tag+'.csv',out,true);
+    };
     $('#ma').onclick=guard(function(){
-      var role=$('#mr').value;var list=$('#ml').value.split(/\r?\n/).map(function(l){var p=l.split(/[,;\t]/).map(function(x){return x.trim()});return {email:p[0],nim:p[1]||'',name:p[2]||''}}).filter(function(x){return x.email});
+      var role=$('#mr').value;var list=parseRoster($('#ml').value);
       if(!list.length)throw new Error('Daftar kosong');
       return api('addMembers',{courseId:c.id,role:role,classId:role==='student'?$('#mk').value:'',members:list}).then(function(r){toast(r.added+' ditambahkan'+(r.skipped.length?', dilewati: '+r.skipped.join('; '):''),!!r.skipped.length);return refreshMe()});
     });
