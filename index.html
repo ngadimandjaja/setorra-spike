@@ -1,242 +1,446 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Setorra — Spike Teknis v2</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="config.js"></script>
-  <style>
-    :root { --ink:#1f2328; --muted:#5b6470; --line:#d8dde3; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; --accent:#0b5cad; }
-    * { box-sizing: border-box; }
-    body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); margin: 0; background:#f6f8fa; }
-    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
-    h2 { font-size: 17px; margin: 0 0 8px; }
-    p.lead { color: var(--muted); margin: 0 0 20px; }
-    section { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; }
-    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
-    button { font:inherit; padding:8px 14px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
-    button.secondary { background:#fff; color:var(--accent); }
-    button:disabled { opacity:.5; cursor:not-allowed; }
-    input[type=number] { width:90px; padding:6px; font:inherit; }
-    input[type=text] { width:100%; padding:6px; font:13px ui-monospace, Menlo, Consolas, monospace; }
-    code, pre { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    pre { background:#f6f8fa; border:1px solid var(--line); border-radius:6px; padding:10px; overflow:auto; max-height:320px; white-space:pre-wrap; word-break:break-all; }
-    .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); } .muted { color:var(--muted); }
-    .hint { color:var(--muted); font-size:13px; }
-    progress { width: 260px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setorra</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="config.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#667085;--line:#e3e6eb;--pri:#1f4fd8;--pri2:#e8eefc;--ok:#127a4a;--warn:#a15c00;--bad:#b42318;--r:10px}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+header h1{font-size:18px;margin:0;cursor:pointer;color:var(--pri)}header .sp{flex:1}
+main{max-width:1000px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+h2{font-size:20px;margin:0 0 10px}h3{font-size:16px;margin:0 0 8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.col{display:flex;flex-direction:column;gap:6px}
+.grow{flex:1;min-width:160px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;width:100%}
+textarea{min-height:70px}
+label{font-size:13px;color:var(--mut);display:block;margin-bottom:2px}
+button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+button.pri{background:var(--pri);color:#fff;border-color:var(--pri)}button.bad{color:var(--bad);border-color:#f0c6c2}
+button:disabled{opacity:.5;cursor:not-allowed}button.sm{padding:3px 8px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase}
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}.tabs button{border-radius:20px}.tabs button.on{background:var(--pri2);border-color:var(--pri);color:var(--pri)}
+.tag{display:inline-block;font-size:12px;border-radius:12px;padding:1px 8px;background:#eef0f4;color:#344}
+.tag.ok{background:#e3f6ec;color:var(--ok)}.tag.warn{background:#fff1da;color:var(--warn)}.tag.bad{background:#fde7e5;color:var(--bad)}
+.mut{color:var(--mut);font-size:13px}.err{color:var(--bad)}.ok{color:var(--ok)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1c2430;color:#fff;padding:10px 16px;border-radius:8px;z-index:20;max-width:90vw}
+.toast.e{background:var(--bad)}
+.bar{height:8px;background:#e8eaef;border-radius:6px;overflow:hidden}.bar>i{display:block;height:100%;background:var(--pri);width:0}
+.slot{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.link{color:var(--pri);cursor:pointer;text-decoration:underline}
+.box{border:1px dashed var(--line);border-radius:8px;padding:10px}
+</style>
 </head>
 <body>
-<main>
-  <h1>Setorra — spike teknis v2</h1>
-  <p class="lead">Frontend statis + backend Apps Script. Jalankan tes berurutan, lalu salin hasilnya.</p>
-
-  <section>
-    <h2>Konfigurasi</h2>
-    <div class="hint">Origin halaman ini: <code id="origin"></code></div>
-    <label class="hint">URL backend (Apps Script /exec)</label>
-    <input type="text" id="backendUrl">
-    <div class="row"><button class="secondary" id="btnPing">Cek backend</button><span id="pingOut" class="muted"></span></div>
-  </section>
-
-  <section>
-    <h2>Tes 1: login Google</h2>
-    <div id="gisStatus" class="muted">Memuat tombol login...</div>
-    <div id="gisButton" style="margin:10px 0"></div>
-    <pre id="loginOut" class="muted">Belum login.</pre>
-    <div class="hint">Lulus jika email muncul dan <code>ok</code> = true. Uji dengan akun @ukrida dan Gmail lain.</div>
-  </section>
-
-  <section>
-    <h2>Tes 2: upload</h2>
-    <input type="file" id="berkas">
-    <div class="row">
-      <button id="btnA">Cara A: base64 lewat fetch</button>
-      <button class="secondary" id="btnB">Cara B: langsung ke sesi resumable Drive</button>
-    </div>
-    <div class="row"><progress id="prog" value="0" max="100"></progress><span id="upTimer" class="muted"></span></div>
-    <pre id="upOut" class="muted">Belum dijalankan.</pre>
-    <div class="hint">Perlu login dulu. Uji 10, 25, 40, 48 MB, lalu satu video di atas 100 MB dengan Cara B.</div>
-  </section>
-
-  <section>
-    <h2>Tes 3: eksekusi bersamaan</h2>
-    <div class="row">
-      <label>Panggilan <input type="number" id="nCalls" value="40" min="1" max="120"></label>
-      <label>Tahan (detik) <input type="number" id="holdSec" value="5" min="1" max="25"></label>
-      <button id="btnConc">Jalankan</button>
-      <span id="concTimer" class="muted"></span>
-    </div>
-    <pre id="concOut" class="muted">Belum dijalankan.</pre>
-    <div class="hint">Ulangi dari 3–4 perangkat yang menekan "Jalankan" bersamaan.</div>
-  </section>
-
-  <section>
-    <h2>Ringkasan</h2>
-    <div class="row"><button id="btnCopy">Salin semua hasil</button><span id="copyMsg" class="muted"></span></div>
-    <pre id="summary" class="muted">{}</pre>
-  </section>
-</main>
-
+<header><h1 id="home">Setorra</h1><span class="sp"></span><span id="who" class="mut"></span><button id="logout" class="sm" hidden>Keluar</button></header>
+<main id="app"><div class="card">Memuat…</div></main>
 <script>
-  var CFG = window.SETORRA_CONFIG || {};
-  var qs = new URLSearchParams(location.search);
-  var CLIENT_ID = qs.get('cid') || CFG.clientId || '';
-  var SESSION = null;
-  var RESULTS = { origin: location.origin, userAgent: navigator.userAgent, startedAt: new Date().toISOString() };
+(function(){
+'use strict';
+var CFG=window.SETORRA_CONFIG;
+var S={token:null,me:null,courses:[],memberships:[],user:null,isUkrida:false,view:null};
+var $=function(s,r){return (r||document).querySelector(s)};
+function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function fmt(iso){if(!iso)return '-';var d=new Date(iso);return isNaN(d)?'-':d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}
+function toLocalInput(iso){if(!iso)return '';var d=new Date(iso);if(isNaN(d))return '';var p=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())}
+function fromLocalInput(v){return v?new Date(v).toISOString():''}
+function mb(n){return (n/1048576).toFixed(1)+' MB'}
+function toast(m,e){var t=document.createElement('div');t.className='toast'+(e?' e':'');t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},e?6000:2500)}
 
-  function $(id) { return document.getElementById(id); }
-  function show(id, obj, cls) { var el = $(id); el.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); el.className = cls || ''; }
-  function record(key, value, append) {
-    if (append) { (RESULTS[key] = RESULTS[key] || []).push(value); } else { RESULTS[key] = value; }
-    show('summary', RESULTS);
-  }
-  function timer(id) { var t0 = Date.now(); var h = setInterval(function () { $(id).textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' detik'; }, 200); return function () { clearInterval(h); return Date.now() - t0; }; }
-  function mb(n) { return Math.round(n / 1048576 * 100) / 100; }
+// ---------- API ----------
+function api(action,body){
+  var p=Object.assign({action:action,token:S.token},body||{});
+  return fetch(CFG.backendUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)})
+   .then(function(r){return r.json()})
+   .then(function(j){if(!j.ok){var e=new Error(j.error||'Gagal');e.code=j.code;if(j.code==='AUTH'&&S.token){S.token=null;sessionStorage.removeItem('st');toast(j.error,true);renderLogin();}throw e}return j.data});
+}
+function guard(fn){return function(){var a=arguments;return Promise.resolve().then(function(){return fn.apply(null,a)}).catch(function(e){toast(e.message||String(e),true)})}}
 
-  $('origin').textContent = location.origin;
-  $('backendUrl').value = qs.get('b') || CFG.backendUrl || '';
-  show('summary', RESULTS);
+// ---------- Auth ----------
+function renderLogin(){
+  $('#who').textContent='';$('#logout').hidden=true;
+  $('#app').innerHTML='<div class="card"><h2>Masuk ke Setorra</h2><p class="mut">Gunakan akun Google. Mahasiswa UKRIDA memakai akun @ukrida.ac.id; peserta lain boleh memakai akun Google apa pun.</p><div id="gbtn"></div><p id="lerr" class="err"></p></div>';
+  var tries=0;(function init(){
+    if(window.google&&google.accounts&&google.accounts.id){
+      google.accounts.id.initialize({client_id:CFG.clientId,callback:onCred,auto_select:false});
+      google.accounts.id.renderButton($('#gbtn'),{theme:'outline',size:'large',text:'signin_with',width:280});
+    } else if(tries++<50){setTimeout(init,150)} else {$('#lerr').textContent='Gagal memuat Google Sign-In.'}
+  })();
+}
+function onCred(resp){
+  $('#lerr')&&($('#lerr').textContent='Memverifikasi…');
+  api('login',{idToken:resp.credential}).then(function(d){
+    S.token=d.token;sessionStorage.setItem('st',d.token);S.isUkrida=d.isUkrida;S.user=d.user;return boot();
+  }).catch(function(e){$('#lerr')&&($('#lerr').textContent=e.message)});
+}
+function boot(){
+  return api('me').then(function(d){
+    S.user=d.user;S.courses=d.courses;S.memberships=d.memberships;
+    $('#who').textContent=S.user.name+' · '+S.user.email;$('#logout').hidden=false;
+    var isStaffGlobal=S.user.globalRoles.length>0;
+    if(!S.user.nim&&!isStaffGlobal){return renderProfile(true)}
+    route();
+  });
+}
+function isLecturer(){return S.user&&(S.user.globalRoles.indexOf('lecturer')>=0||S.user.globalRoles.indexOf('admin')>=0)}
+function isAdmin(){return S.user&&S.user.globalRoles.indexOf('admin')>=0}
 
-  /* Panggil backend: text/plain agar tidak ada preflight CORS */
-  function api(payload) {
-    return fetch($('backendUrl').value.trim(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    }).then(function (r) {
-      return r.text().then(function (t) {
-        try { return JSON.parse(t); } catch (e) { return { ok: false, httpStatus: r.status, error: 'respon_bukan_json', snippet: t.slice(0, 200) }; }
-      });
+function renderProfile(first){
+  var isUk=S.isUkrida||/@ukrida\.ac\.id$/.test(S.user.email);
+  $('#app').innerHTML='<div class="card" style="max-width:520px"><h2>'+(first?'Lengkapi data Anda':'Profil')+'</h2>'+
+   '<div class="col"><div><label>Nama lengkap</label><input id="pn" value="'+esc(S.user.name)+'"></div>'+
+   '<div><label>'+(isUk?'NIM':'NIM atau ID lain (mis. NIK/NIP/nomor peserta)')+'</label><input id="pm" value="'+esc(S.user.nim)+'"></div>'+
+   '<div><label>Institusi</label><input id="pi" value="'+esc(S.user.institution)+'"></div>'+
+   '<div class="row"><button class="pri" id="psave">Simpan</button>'+(first?'':'<button id="pback">Kembali</button>')+'</div></div></div>';
+  $('#psave').onclick=guard(function(){return api('updateProfile',{name:$('#pn').value,nim:$('#pm').value,institution:$('#pi').value}).then(function(){toast('Tersimpan');return boot()})});
+  if($('#pback'))$('#pback').onclick=function(){route()};
+}
+
+// ---------- Router ----------
+function go(h){location.hash=h}
+window.addEventListener('hashchange',function(){if(S.token&&S.user)route()});
+function route(){
+  var h=location.hash.replace(/^#\/?/,'').split('/');
+  var v=h[0]||'';
+  if(v==='course'&&h[1])return renderCourse(h[1],h[2]||'assignments');
+  if(v==='assignment'&&h[1])return renderAssignment(h[1],h[2]);
+  if(v==='admin'&&isAdmin())return renderAdmin();
+  if(v==='profile')return renderProfile(false);
+  if(v==='reviews')return renderReviews();
+  renderHome();
+}
+$('#home').onclick=function(){go('')};
+$('#logout').onclick=function(){S.token=null;S.user=null;sessionStorage.removeItem('st');if(window.google&&google.accounts)google.accounts.id.disableAutoSelect();renderLogin()};
+
+// ---------- Home ----------
+function renderHome(){
+  var h='<div class="row" style="margin-bottom:10px"><h2 class="grow">Mata kuliah</h2><button id="bprof">Profil</button><button id="brev">Tugas peninjauan</button>'+(isAdmin()?'<button id="badm">Admin</button>':'')+(isLecturer()?'<button class="pri" id="bnew">+ Mata kuliah</button>':'')+'</div>';
+  if(!S.courses.length)h+='<div class="card mut">Belum ada mata kuliah. Masukkan kode kelas dari dosen di bawah.</div>';
+  S.courses.forEach(function(c){
+    var roles=S.memberships.filter(function(m){return m.courseId===c.id}).map(function(m){return m.role});
+    if(c.ownerEmail===S.user.email)roles.unshift('dosen');
+    h+='<div class="card row"><div class="grow"><h3 style="margin:0">'+esc(c.code?c.code+' · ':'')+esc(c.name)+'</h3><div class="mut">'+esc(c.term)+' · '+esc(roles.filter(function(v,i,a){return a.indexOf(v)===i}).join(', '))+'</div></div><button class="pri sm" data-open="'+esc(c.id)+'">Buka</button></div>';
+  });
+  h+='<div class="card"><h3>Gabung kelas dengan kode</h3><div class="row"><input id="jc" placeholder="Kode kelas (6 karakter)" style="max-width:220px;text-transform:uppercase"><input id="jn" placeholder="'+(S.isUkrida?'NIM':'NIM/ID')+'" value="'+esc(S.user.nim)+'" style="max-width:200px"><button id="bj" class="pri">Gabung</button></div></div>';
+  $('#app').innerHTML=h;
+  document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){go('course/'+b.dataset.open)}});
+  $('#bprof').onclick=function(){go('profile')};$('#brev').onclick=function(){go('reviews')};
+  if($('#badm'))$('#badm').onclick=function(){go('admin')};
+  if($('#bnew'))$('#bnew').onclick=guard(function(){var n=prompt('Nama mata kuliah');if(!n)return;var c=prompt('Kode mata kuliah (opsional)')||'';var t=prompt('Semester/periode (mis. 2026/1)')||'';return api('createCourse',{name:n,code:c,term:t}).then(refreshMe).then(function(){toast('Mata kuliah dibuat')})});
+  $('#bj').onclick=guard(function(){return api('joinClass',{joinCode:$('#jc').value,nim:$('#jn').value,name:S.user.name}).then(refreshMe).then(function(){toast('Berhasil bergabung')})});
+}
+function refreshMe(){return api('me').then(function(d){S.user=d.user;S.courses=d.courses;S.memberships=d.memberships;route()})}
+
+// ---------- Tinjauan ----------
+function renderReviews(){
+  $('#app').innerHTML='<div class="card"><div class="row"><h2 class="grow">Tugas peninjauan saya</h2><button id="bk">Kembali</button></div><div id="rl">Memuat…</div></div>';
+  $('#bk').onclick=function(){go('')};
+  guard(function(){return api('myReviews').then(function(rs){
+    $('#rl').innerHTML=rs.length?'<table><tr><th>Mata kuliah</th><th>Tugas</th><th>Jumlah</th><th></th></tr>'+rs.map(function(r){return '<tr><td>'+esc(r.course)+'</td><td>'+esc(r.title)+'</td><td>'+r.count+'</td><td><button class="sm" data-a="'+esc(r.assignmentId)+'">Buka</button></td></tr>'}).join('')+'</table>':'<div class="mut">Belum ada penugasan.</div>';
+    document.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){go('assignment/'+b.dataset.a+'/review')}});
+  })})();
+}
+
+// ---------- Mata kuliah ----------
+function courseRoles(c){
+  var r={};if(isAdmin())r.admin=1;if(c.ownerEmail===S.user.email)r.lecturer=1;
+  S.memberships.forEach(function(m){if(m.courseId===c.id)r[m.role]=1});return r;
+}
+function renderCourse(id,tab){
+  var c=S.courses.filter(function(x){return x.id===id})[0];if(!c){go('');return}
+  var R=courseRoles(c),lect=!!(R.lecturer||R.admin),staff=lect||!!R.assistant;
+  var tabs=[['assignments','Tugas']];if(lect)tabs.push(['classes','Kelas & anggota']);if(staff)tabs.push(['grades','Rekap nilai']);if(lect)tabs.push(['audit','Log']);
+  var h='<div class="row"><h2 class="grow">'+esc(c.code?c.code+' · ':'')+esc(c.name)+'</h2><button id="bk">Kembali</button></div><div class="tabs">'+tabs.map(function(t){return '<button data-t="'+t[0]+'" class="'+(t[0]===tab?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div><div id="tb">Memuat…</div>';
+  $('#app').innerHTML=h;$('#bk').onclick=function(){go('')};
+  document.querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){go('course/'+id+'/'+b.dataset.t)}});
+  guard(function(){
+    if(tab==='classes')return tabClasses(c,R);if(tab==='grades')return tabGrades(c);if(tab==='audit')return tabAudit(c);return tabAssignments(c,R,lect);
+  })();
+}
+function tabAssignments(c,R,lect){
+  return api('listAssignments',{courseId:c.id}).then(function(list){
+    var h=lect?'<div class="row" style="margin-bottom:10px"><button class="pri" id="na">+ Tugas baru</button></div>':'';
+    if(!list.length)h+='<div class="card mut">Belum ada tugas.</div>';
+    list.forEach(function(a){
+      var due=a.schedules.map(function(s){return fmt(s.dueAt)}).filter(function(v,i,x){return x.indexOf(v)===i}).join(' / ');
+      h+='<div class="card row"><div class="grow"><h3 style="margin:0">'+esc(a.title)+' '+(a.type==='group'?'<span class="tag">kelompok</span>':'<span class="tag">individu</span>')+(a.status!=='published'?' <span class="tag warn">draf</span>':'')+'</h3><div class="mut">Tenggat: '+esc(due||'-')+' · '+a.slots.length+' slot</div></div>'+
+       (lect?'<button class="sm" data-edit="'+esc(a.id)+'">Ubah</button>':'')+'<button class="pri sm" data-as="'+esc(a.id)+'">Buka</button></div>';
     });
-  }
+    $('#tb').innerHTML=h;
+    window._asg=list;
+    document.querySelectorAll('[data-as]').forEach(function(b){b.onclick=function(){go('assignment/'+b.dataset.as)}});
+    document.querySelectorAll('[data-edit]').forEach(function(b){b.onclick=guard(function(){return assignmentForm(c,list.filter(function(a){return a.id===b.dataset.edit})[0])})});
+    if($('#na'))$('#na').onclick=guard(function(){return assignmentForm(c,null)});
+  });
+}
 
-  $('btnPing').onclick = function () {
-    show('pingOut', 'Menghubungi...', 'muted');
-    var t0 = Date.now();
-    api({ action: 'ping' }).then(function (r) { r.ms = Date.now() - t0; show('pingOut', r.ok ? 'Backend hidup (' + r.ms + ' ms)' : JSON.stringify(r), r.ok ? 'ok' : 'bad'); record('ping', r); })
-      .catch(function (e) { show('pingOut', 'Gagal: ' + e, 'bad'); record('ping', { error: String(e) }); });
-  };
+function tabClasses(c){
+  return Promise.all([api('listClasses',{courseId:c.id}),api('listMembers',{courseId:c.id})]).then(function(r){
+    var cls=r[0],mem=r[1];
+    var h='<div class="card"><div class="row"><h3 class="grow">Kelas</h3><button id="nc" class="pri sm">+ Kelas</button></div><table><tr><th>Kelas</th><th>Kode gabung</th><th>Kapasitas</th><th></th></tr>'+cls.map(function(k){return '<tr><td>'+esc(k.name)+'</td><td><b>'+esc(k.joinCode)+'</b></td><td>'+mem.filter(function(m){return m.classId===k.id&&m.role==='student'}).length+' / '+k.maxStudents+'</td><td><button class="sm" data-rc="'+esc(k.id)+'">Kode baru</button> <button class="sm" data-cap="'+esc(k.id)+'">Kapasitas</button></td></tr>'}).join('')+'</table>'+
+     '<div class="row" style="margin-top:8px"><label style="margin:0"><input type="checkbox" id="jo" style="width:auto" '+(c.joinOpen?'checked':'')+'> Izinkan mahasiswa gabung dengan kode</label></div></div>';
+    h+='<div class="card"><h3>Tambah anggota (tempel daftar)</h3><p class="mut">Satu baris per orang: <code>email, NIM, Nama</code>. Untuk asisten/mentor/reviewer NIM boleh kosong.</p><div class="grid2"><div><label>Peran</label><select id="mr"><option value="student">Mahasiswa</option><option value="assistant">Asisten kelas</option><option value="mentor">Mentor</option><option value="reviewer">Reviewer/penguji</option><option value="lecturer">Dosen pendamping</option></select></div><div><label>Kelas (untuk mahasiswa)</label><select id="mk">'+cls.map(function(k){return '<option value="'+esc(k.id)+'">'+esc(k.name)+'</option>'}).join('')+'</select></div></div><textarea id="ml" placeholder="budi@ukrida.ac.id, 1001, Budi Santoso"></textarea><div class="row"><button class="pri" id="ma">Tambahkan</button></div></div>';
+    h+='<div class="card"><h3>Anggota</h3><table><tr><th>Nama</th><th>Email</th><th>NIM/ID</th><th>Peran</th><th>Kelas</th><th></th></tr>'+mem.map(function(m){var k=cls.filter(function(x){return x.id===m.classId})[0];return '<tr><td>'+esc(m.name)+'</td><td>'+esc(m.email)+'</td><td>'+esc(m.nim)+'</td><td><span class="tag">'+esc(m.role)+'</span></td><td>'+esc(k?k.name:'-')+'</td><td><button class="sm bad" data-rm="'+esc(m.id)+'">Hapus</button></td></tr>'}).join('')+'</table></div>';
+    $('#tb').innerHTML=h;
+    $('#nc').onclick=guard(function(){var n=prompt('Nama kelas (mis. A)');if(!n)return;var mx=prompt('Kapasitas mahasiswa',String(c.maxStudents||70));return api('createClass',{courseId:c.id,name:n,maxStudents:Number(mx)||70}).then(function(){route()})});
+    document.querySelectorAll('[data-rc]').forEach(function(b){b.onclick=guard(function(){if(!confirm('Kode lama tidak berlaku lagi. Lanjut?'))return;return api('updateClass',{classId:b.dataset.rc,regenerateCode:true}).then(function(){route()})})});
+    document.querySelectorAll('[data-cap]').forEach(function(b){b.onclick=guard(function(){var v=prompt('Kapasitas baru');if(!v)return;return api('updateClass',{classId:b.dataset.cap,maxStudents:Number(v)}).then(function(){route()})})});
+    document.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=guard(function(){if(!confirm('Hapus anggota ini?'))return;return api('removeMember',{memberId:b.dataset.rm}).then(function(){route()})})});
+    $('#jo').onchange=guard(function(){return api('updateCourse',{courseId:c.id,joinOpen:$('#jo').checked}).then(refreshMe)});
+    $('#ma').onclick=guard(function(){
+      var role=$('#mr').value;var list=$('#ml').value.split(/\r?\n/).map(function(l){var p=l.split(/[,;\t]/).map(function(x){return x.trim()});return {email:p[0],nim:p[1]||'',name:p[2]||''}}).filter(function(x){return x.email});
+      if(!list.length)throw new Error('Daftar kosong');
+      return api('addMembers',{courseId:c.id,role:role,classId:role==='student'?$('#mk').value:'',members:list}).then(function(r){toast(r.added+' ditambahkan'+(r.skipped.length?', dilewati: '+r.skipped.join('; '):''),!!r.skipped.length);return refreshMe()});
+    });
+  });
+}
 
-  /* Tes 1 */
-  function initGis() {
-    if (!CLIENT_ID) { show('gisStatus', 'Client ID belum diatur (config.js atau ?cid=).', 'bad'); return; }
-    if (!window.google || !google.accounts || !google.accounts.id) { show('gisStatus', 'Library login Google gagal dimuat.', 'bad'); return; }
-    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential, auto_select: false });
-    google.accounts.id.renderButton($('gisButton'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'id' });
-    show('gisStatus', 'Tombol siap.', 'muted');
-  }
-  function onCredential(resp) {
-    show('loginOut', 'Memverifikasi di backend...', 'muted');
-    api({ action: 'login', idToken: resp.credential }).then(function (r) {
-      if (r.ok) SESSION = r.sessionToken;
-      var view = Object.assign({}, r); if (view.sessionToken) view.sessionToken = '(tersimpan)';
-      show('loginOut', view, r.ok ? 'ok' : 'bad'); record('tes1_login', view);
-    }).catch(function (e) { show('loginOut', String(e), 'bad'); record('tes1_login', { error: String(e) }); });
-  }
-  window.addEventListener('load', function () { setTimeout(initGis, 600); });
-
-  /* Tes 2 */
-  function pickFile() {
-    if (!SESSION) { show('upOut', 'Login dulu (Tes 1).', 'warn'); return null; }
-    var f = $('berkas').files[0];
-    if (!f) { show('upOut', 'Pilih file dulu.', 'warn'); return null; }
-    return f;
-  }
-  function busy(on) { $('btnA').disabled = on; $('btnB').disabled = on; }
-
-  $('btnA').onclick = function () {
-    var f = pickFile(); if (!f) return;
-    busy(true); $('prog').removeAttribute('value');
-    show('upOut', 'Cara A: membaca dan mengirim ' + mb(f.size) + ' MB...', 'muted');
-    var stop = timer('upTimer');
-    var reader = new FileReader();
-    reader.onload = function () {
-      api({ action: 'uploadA', session: SESSION, name: f.name, mime: f.type, data: String(reader.result).split(',')[1] })
-        .then(function (r) { r.clientMs = stop(); r.fileMB = mb(f.size); finishUp(r, 'tes2A'); })
-        .catch(function (e) { finishUp({ ok: false, fileMB: mb(f.size), clientMs: stop(), error: String(e) }, 'tes2A'); });
+function tabGrades(c){
+  return api('gradebook',{courseId:c.id}).then(function(g){
+    var h='<div class="card"><div class="row"><h3 class="grow">Rekap nilai</h3><button id="csv" class="sm">Unduh CSV</button></div><div style="overflow:auto"><table><tr><th>NIM</th><th>Nama</th><th>Kelas</th>'+g.assignments.map(function(a){return '<th>'+esc(a.title)+' /'+a.max+'</th>'}).join('')+'</tr>'+
+     g.rows.map(function(r){return '<tr><td>'+esc(r.nim)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.class)+'</td>'+g.assignments.map(function(a){var s=r.scores[a.id];return '<td>'+(s?(s.total!=null?s.total:'<span class="mut">'+esc(s.status)+'</span>')+(s.late?' <span class="tag warn">telat</span>':''):'<span class="tag bad">belum</span>')+'</td>'}).join('')+'</tr>'}).join('')+'</table></div></div>';
+    $('#tb').innerHTML=h;
+    $('#csv').onclick=function(){
+      function q(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}
+      var lines=[['NIM','Nama','Email','Kelas'].concat(g.assignments.map(function(a){return a.title})).map(q).join(',')];
+      g.rows.forEach(function(r){lines.push([r.nim,r.name,r.email,r.class].concat(g.assignments.map(function(a){var s=r.scores[a.id];return s?(s.total!=null?s.total:s.status):'belum'})).map(q).join(','))});
+      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv'}));a.download='nilai-'+(c.code||'mk')+'.csv';a.click();
     };
-    reader.readAsDataURL(f);
-  };
+  });
+}
+function tabAudit(c){
+  return api('auditLog',{limit:300}).then(function(rows){
+    $('#tb').innerHTML='<div class="card"><h3>Log aktivitas (terbaru)</h3><div style="overflow:auto"><table><tr><th>Waktu</th><th>Pelaku</th><th>Aksi</th><th>Target</th><th>Rincian</th></tr>'+rows.map(function(r){return '<tr><td>'+esc(fmt(r.at))+'</td><td>'+esc(r.actor)+'</td><td>'+esc(r.action)+'</td><td>'+esc(r.target)+'</td><td class="mut">'+esc(r.detail)+'</td></tr>'}).join('')+'</table></div></div>';
+  });
+}
 
-  $('btnB').onclick = function () {
-    var f = pickFile(); if (!f) return;
-    busy(true); $('prog').value = 0;
-    show('upOut', 'Cara B: meminta sesi upload...', 'muted');
-    var stop = timer('upTimer');
-    api({ action: 'initB', session: SESSION, name: f.name, mime: f.type || 'application/octet-stream', size: f.size, origin: location.origin })
-      .then(function (init) {
-        if (!init.ok) throw new Error('initB gagal: ' + JSON.stringify(init));
-        show('upOut', 'Cara B: mengunggah langsung ke Drive...', 'muted');
-        return putChunks(init.uploadUrl, f);
-      })
-      .then(function (driveFile) {
-        return api({ action: 'finalizeB', session: SESSION, fileId: driveFile.id, clientMs: Date.now() });
-      })
-      .then(function (r) { r.clientMs = stop(); r.fileMB = mb(f.size); finishUp(r, 'tes2B'); })
-      .catch(function (e) { finishUp({ ok: false, fileMB: mb(f.size), clientMs: stop(), error: String(e) }, 'tes2B'); });
-  };
-
-  /* Unggah per potongan 8 MB (kelipatan 256 KB) ke URL sesi resumable */
-  function putChunks(url, file) {
-    var CHUNK = 8 * 1024 * 1024;
-    return new Promise(function (resolve, reject) {
-      function send(start) {
-        var end = Math.min(start + CHUNK, file.size);
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', url, true);
-        xhr.setRequestHeader('Content-Range', 'bytes ' + start + '-' + (end - 1) + '/' + file.size);
-        xhr.upload.onprogress = function (ev) { if (ev.lengthComputable) $('prog').value = Math.round((start + ev.loaded) / file.size * 100); };
-        xhr.onload = function () {
-          if (xhr.status === 308) {
-            var range = xhr.getResponseHeader('Range');
-            var next = range ? Number(range.split('-')[1]) + 1 : end;
-            send(next);
-          } else if (xhr.status === 200 || xhr.status === 201) {
-            try { resolve(JSON.parse(xhr.responseText)); } catch (e) { reject(new Error('respon Drive tidak terbaca')); }
-          } else {
-            reject(new Error('PUT gagal: HTTP ' + xhr.status + ' ' + xhr.responseText.slice(0, 200)));
-          }
-        };
-        xhr.onerror = function () { reject(new Error('PUT diblokir (kemungkinan CORS) atau jaringan putus')); };
-        xhr.send(file.slice(start, end));
-      }
-      send(0);
-    });
-  }
-
-  function finishUp(r, key) {
-    busy(false); $('prog').value = r.ok ? 100 : 0;
-    show('upOut', r, r.ok ? 'ok' : 'bad'); record(key, r, true);
-  }
-
-  /* Tes 3 */
-  $('btnConc').onclick = function () {
-    var n = Math.max(1, Math.min(120, parseInt($('nCalls').value, 10) || 40));
-    var hold = Math.max(1, Math.min(25, parseInt($('holdSec').value, 10) || 5)) * 1000;
-    var ok = 0, fail = 0, errors = {}, ms = [];
-    $('btnConc').disabled = true; show('concOut', 'Mengirim ' + n + ' permintaan...', 'muted');
-    var stop = timer('concTimer');
-    var jobs = [];
-    for (var i = 0; i < n; i++) {
-      jobs.push(api({ action: 'probe', i: i, holdMs: hold }).then(function (r) {
-        if (r.ok) { ok++; ms.push(r.serverMs); } else { fail++; var k = String(r.error || r.snippet).slice(0, 120); errors[k] = (errors[k] || 0) + 1; }
-      }).catch(function (e) { fail++; var k = String(e).slice(0, 120); errors[k] = (errors[k] || 0) + 1; }));
+// ---------- Form tugas ----------
+function assignmentForm(c,a){
+  return api('listClasses',{courseId:c.id}).then(function(cls){
+    a=a||{title:'',description:'',type:'individual',submitterRule:'any',namePattern:'{NIM}-{NAMA}-{TUGAS}-{SLOT}',latePolicy:'lock',lateUntilHours:0,maxPoints:100,gradingEnabled:true,mentorGrading:false,rubric:[],status:'published',slots:[{label:'Berkas 1',kind:'file',exts:'pdf,ppt,pptx,doc,docx,docm,zip,rar',maxMB:50,required:true}],schedules:[]};
+    var st={slots:a.slots.map(function(s){return Object.assign({},s)}),rubric:a.rubric.map(function(r){return Object.assign({},r)})};
+    function draw(){
+      var h='<div class="card"><div class="row"><h2 class="grow">'+(a.id?'Ubah tugas':'Tugas baru')+'</h2><button id="cx">Batal</button></div>'+
+      '<div class="col"><div><label>Judul</label><input id="f_t" value="'+esc(a.title)+'"></div><div><label>Deskripsi / instruksi</label><textarea id="f_d">'+esc(a.description)+'</textarea></div>'+
+      '<div class="grid2"><div><label>Jenis</label><select id="f_ty"><option value="individual"'+(a.type==='individual'?' selected':'')+'>Individu</option><option value="group"'+(a.type==='group'?' selected':'')+'>Kelompok</option></select></div>'+
+      '<div><label>Yang boleh mengumpulkan (kelompok)</label><select id="f_sr"><option value="any"'+(a.submitterRule==='any'?' selected':'')+'>Siapa saja dalam kelompok</option><option value="leader"'+(a.submitterRule==='leader'?' selected':'')+'>Hanya ketua</option></select></div></div>'+
+      '<div><label>Pola nama berkas (pakai {NIM} {NAMA} {TUGAS} {SLOT} {KELAS} {KELOMPOK} {MK})</label><input id="f_np" value="'+esc(a.namePattern)+'"></div>'+
+      '<div class="grid2"><div><label>Jika lewat tenggat</label><select id="f_lp"><option value="lock"'+(a.latePolicy==='lock'?' selected':'')+'>Kunci (tidak menerima)</option><option value="accept"'+(a.latePolicy==='accept'?' selected':'')+'>Tetap terima (ditandai telat)</option></select></div>'+
+      '<div><label>Batas terlambat (jam, 0 = tanpa batas)</label><input id="f_lh" type="number" min="0" value="'+esc(a.lateUntilHours)+'"></div></div>'+
+      '<div class="row"><label style="margin:0"><input type="checkbox" id="f_g" style="width:auto"'+(a.gradingEnabled?' checked':'')+'> Aktifkan penilaian</label><label style="margin:0"><input type="checkbox" id="f_mg" style="width:auto"'+(a.mentorGrading?' checked':'')+'> Mentor boleh ikut menilai</label><label style="margin:0"><input type="checkbox" id="f_pub" style="width:auto"'+(a.status!=='draft'?' checked':'')+'> Terbitkan</label></div></div></div>';
+      h+='<div class="card"><div class="row"><h3 class="grow">Slot berkas</h3><button class="sm" id="as">+ Slot</button></div>'+st.slots.map(function(s,i){return '<div class="slot"><div class="grid2"><div><label>Label</label><input data-s="'+i+'" data-k="label" value="'+esc(s.label)+'"></div><div><label>Tipe</label><select data-s="'+i+'" data-k="kind"><option value="file"'+(s.kind==='file'?' selected':'')+'>Berkas</option><option value="video"'+(s.kind==='video'?' selected':'')+'>Video (berkas, atau tautan jika besar)</option><option value="link"'+(s.kind==='link'?' selected':'')+'>Tautan saja</option></select></div>'+
+       '<div><label>Ekstensi diizinkan (pisah koma)</label><input data-s="'+i+'" data-k="exts" value="'+esc(s.exts)+'"></div><div><label>Maks. ukuran (MB)</label><input type="number" data-s="'+i+'" data-k="maxMB" value="'+esc(s.maxMB)+'"></div></div><div class="row" style="margin-top:6px"><label style="margin:0"><input type="checkbox" data-s="'+i+'" data-k="required" style="width:auto"'+(s.required!==false?' checked':'')+'> Wajib</label><button class="sm bad" data-ds="'+i+'">Hapus slot</button></div></div>'}).join('')+'</div>';
+      h+='<div class="card"><div class="row"><h3 class="grow">Rubrik (opsional)</h3><button class="sm" id="ar">+ Kriteria</button></div><p class="mut">Jika rubrik diisi, nilai maksimum = jumlah bobot kriteria. Tanpa rubrik, dosen mengisi satu nilai.</p>'+
+       (st.rubric.length?'':'<div class="grid2"><div><label>Nilai maksimum</label><input id="f_mp" type="number" value="'+esc(a.maxPoints)+'"></div></div>')+
+       st.rubric.map(function(r,i){return '<div class="row slot"><div class="grow"><label>Kriteria</label><input data-r="'+i+'" data-k="name" value="'+esc(r.name)+'"></div><div style="width:110px"><label>Bobot</label><input type="number" data-r="'+i+'" data-k="max" value="'+esc(r.max)+'"></div><div class="grow"><label>Deskripsi</label><input data-r="'+i+'" data-k="desc" value="'+esc(r.desc||'')+'"></div><button class="sm bad" data-dr="'+i+'">Hapus</button></div>'}).join('')+'</div>';
+      h+='<div class="card"><h3>Jadwal per kelas</h3>'+cls.map(function(k){var s=(a.schedules||[]).filter(function(x){return x.classId===k.id})[0]||{};return '<div class="grid2 slot"><div><label>Kelas '+esc(k.name)+' · buka</label><input type="datetime-local" data-sc="'+esc(k.id)+'" data-k="openAt" value="'+esc(toLocalInput(s.openAt))+'"></div><div><label>Tenggat</label><input type="datetime-local" data-sc="'+esc(k.id)+'" data-k="dueAt" value="'+esc(toLocalInput(s.dueAt))+'"></div></div>'}).join('')+'<p class="mut">Kosongkan kedua kolom untuk tidak menjadwalkan tugas ini di kelas tersebut.</p></div>';
+      h+='<div class="row"><button class="pri" id="sv">Simpan tugas</button></div>';
+      $('#app').innerHTML=h;
+      bind();
     }
-    Promise.all(jobs).then(function () {
-      var total = stop(); $('btnConc').disabled = false; ms.sort(function (a, b) { return a - b; });
-      var r = { panggilan: n, tahanDetik: hold / 1000, berhasil: ok, gagal: fail, totalDetik: +(total / 1000).toFixed(1), serverMsMedian: ms.length ? ms[Math.floor(ms.length / 2)] : null, pesanError: errors };
-      show('concOut', r, fail === 0 ? 'ok' : 'bad'); record('tes3', r, true);
-    });
-  };
+    function readBasics(){a.title=$('#f_t').value;a.description=$('#f_d').value;a.type=$('#f_ty').value;a.submitterRule=$('#f_sr').value;a.namePattern=$('#f_np').value;a.latePolicy=$('#f_lp').value;a.lateUntilHours=Number($('#f_lh').value||0);a.gradingEnabled=$('#f_g').checked;a.mentorGrading=$('#f_mg').checked;a.status=$('#f_pub').checked?'published':'draft';if($('#f_mp'))a.maxPoints=Number($('#f_mp').value||100)}
+    function readAll(){readBasics();document.querySelectorAll('[data-s]').forEach(function(el){var s=st.slots[+el.dataset.s];s[el.dataset.k]=el.type==='checkbox'?el.checked:(el.type==='number'?Number(el.value):el.value)});document.querySelectorAll('[data-r]').forEach(function(el){var r=st.rubric[+el.dataset.r];r[el.dataset.k]=el.type==='number'?Number(el.value):el.value})}
+    function bind(){
+      $('#cx').onclick=function(){route()};
+      $('#as').onclick=function(){readAll();st.slots.push({label:'Berkas '+(st.slots.length+1),kind:'file',exts:'pdf,ppt,pptx,doc,docx,docm,zip,rar',maxMB:50,required:true});draw()};
+      $('#ar').onclick=function(){readAll();st.rubric.push({name:'',max:10,desc:''});draw()};
+      document.querySelectorAll('[data-ds]').forEach(function(b){b.onclick=function(){readAll();st.slots.splice(+b.dataset.ds,1);draw()}});
+      document.querySelectorAll('[data-dr]').forEach(function(b){b.onclick=function(){readAll();st.rubric.splice(+b.dataset.dr,1);draw()}});
+      $('#sv').onclick=guard(function(){
+        readAll();
+        var sch=cls.map(function(k){var o=document.querySelector('[data-sc="'+k.id+'"][data-k="openAt"]').value,d=document.querySelector('[data-sc="'+k.id+'"][data-k="dueAt"]').value;return (o||d)?{classId:k.id,openAt:fromLocalInput(o),dueAt:fromLocalInput(d)}:null}).filter(Boolean);
+        var body=Object.assign({},a,{slots:st.slots,rubric:st.rubric.filter(function(r){return r.name}),schedules:sch});
+        return api('saveAssignment',{courseId:c.id,assignment:body}).then(function(){toast('Tugas tersimpan');route()});
+      });
+    }
+    draw();
+  });
+}
 
-  $('btnCopy').onclick = function () {
-    var text = JSON.stringify(RESULTS, null, 2);
-    navigator.clipboard.writeText(text).then(function () { $('copyMsg').textContent = 'Tersalin.'; }, function () { $('copyMsg').textContent = 'Gagal menyalin; salin manual dari kotak di bawah.'; });
-  };
+// ---------- Tugas: tampilan ----------
+function findAssignment(id){
+  var chain=Promise.resolve(null);
+  S.courses.forEach(function(c){chain=chain.then(function(f){if(f)return f;return api('listAssignments',{courseId:c.id}).then(function(l){var a=l.filter(function(x){return x.id===id})[0];return a?{a:a,c:c}:null}).catch(function(){return null})})});
+  return chain;
+}
+function renderAssignment(id,mode){
+  $('#app').innerHTML='<div class="card">Memuat…</div>';
+  guard(function(){return findAssignment(id).then(function(f){
+    if(!f)return $('#app').innerHTML='<div class="card">Tugas tidak ditemukan atau Anda tidak punya akses. <button id="bk">Kembali</button></div>',$('#bk').onclick=function(){go('')};
+    var R=courseRoles(f.c),staff=!!(R.admin||R.lecturer||R.assistant);
+    if(mode==='review'||(staff&&mode!=='submit'))return viewReview(f.a,f.c,R);
+    return api('mySubmission',{assignmentId:id}).catch(function(e){if(e.code==='FORBIDDEN'||e.code==='NO_GROUP'){return {noOwner:e}}throw e}).then(function(m){
+      if(m.noOwner&&(R.reviewer||R.mentor))return viewReview(f.a,f.c,R);
+      return viewSubmit(f.a,f.c,m);
+    });
+  })})();
+}
+
+// ---------- Mahasiswa: pengumpulan ----------
+function viewSubmit(a,c,m){
+  var sub=m.submission,files=sub?sub.files:[],locked=sub&&sub.status==='locked',win=m.window;
+  var h='<div class="row"><h2 class="grow">'+esc(a.title)+'</h2><button id="bk">Kembali</button></div>';
+  h+='<div class="card"><div class="mut">'+esc(c.name)+' · '+(a.type==='group'?'Tugas kelompok':'Tugas individu')+'</div><p style="white-space:pre-wrap">'+esc(a.description)+'</p>';
+  if(win)h+='<div class="row"><span class="tag '+(win.open?(win.late?'warn':'ok'):'bad')+'">'+(win.open?(win.late?'Terbuka (terlambat)':'Terbuka'):esc(win.reason))+'</span>'+(locked?'<span class="tag ok">Terkunci/terkumpul '+esc(fmt(sub.lockedAt))+'</span>':'')+(sub&&sub.late?'<span class="tag warn">Ditandai telat</span>':'')+'</div>';
+  h+='</div>';
+  if(a.type==='group'){
+    h+='<div class="card"><h3>Kelompok</h3>'+(m.group?'<div><b>'+esc(m.group.name)+'</b> · ketua: '+esc(m.group.leaderEmail)+'<br><span class="mut">'+m.group.members.map(esc).join(', ')+'</span></div>'+(!locked?'<button class="sm" id="eg" style="margin-top:6px">Ubah kelompok</button>':''):'<div class="mut">Anda belum punya kelompok.</div><button class="sm pri" id="eg">Buat kelompok</button>')+(a.submitterRule==='leader'?'<div class="mut" style="margin-top:6px">Hanya ketua yang dapat mengumpulkan.</div>':'')+'</div>';
+  }
+  if(m.grade){h+='<div class="card"><h3>Nilai</h3><div style="font-size:24px"><b>'+m.grade.total+'</b> / '+m.grade.max+'</div>'+(m.grade.scores.length?'<table><tr><th>Kriteria</th><th>Skor</th><th>Catatan</th></tr>'+m.grade.scores.map(function(s){return '<tr><td>'+esc(s.name)+'</td><td>'+s.score+' / '+s.max+'</td><td>'+esc(s.note)+'</td></tr>'}).join('')+'</table>':'')+(m.grade.feedback?'<p style="white-space:pre-wrap"><b>Umpan balik:</b> '+esc(m.grade.feedback)+'</p>':'')+'</div>'}
+  if(m.canSubmit!==false){
+    h+='<div class="card"><h3>Berkas</h3>';
+    a.slots.forEach(function(s){
+      var f=files.filter(function(x){return x.slotId===s.id})[0];
+      h+='<div class="slot" data-slot="'+esc(s.id)+'"><div class="row"><b class="grow">'+esc(s.label)+(s.required?' *':'')+'</b><span class="mut">'+(s.kind==='link'?'tautan':esc(s.exts||'bebas')+' · maks '+s.maxMB+' MB')+'</span></div>';
+      if(f)h+='<div style="margin:6px 0">'+(f.kind==='link'?'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.url)+'</a>':'<span class="link" data-dl="'+esc(f.id)+'">'+esc(f.storedName)+'</span> <span class="mut">('+mb(f.bytes)+', asal: '+esc(f.originalName)+')</span>')+' <span class="mut">'+esc(fmt(f.uploadedAt))+'</span>'+(!locked?' <button class="sm bad" data-rf="'+esc(f.id)+'">Hapus</button>':'')+'</div>';
+      if(!locked&&win&&win.open){
+        if(s.kind!=='link')h+='<div class="row"><input type="file" data-up="'+esc(s.id)+'" style="max-width:320px"><button class="sm pri" data-go="'+esc(s.id)+'">'+(f?'Ganti':'Unggah')+'</button></div><div class="bar" hidden><i></i></div><div class="mut" data-st></div>';
+        if(s.kind==='link'||s.kind==='video')h+='<div class="row" style="margin-top:6px"><input placeholder="'+(s.kind==='video'?'Atau tempel tautan video (wajib untuk video besar)':'https://…')+'" data-lk="'+esc(s.id)+'"><button class="sm" data-sl="'+esc(s.id)+'">Simpan tautan</button></div>';
+      }
+      h+='</div>';
+    });
+    if(!locked&&win&&win.open)h+='<div class="row"><button class="pri" id="fs">Kumpulkan &amp; kunci</button><span class="mut">Setelah dikunci, berkas tidak bisa diubah kecuali dosen membuka kunci.</span></div>';
+    h+='</div>';
+  } else if(sub){h+='<div class="card"><h3>Status pengumpulan kelompok</h3><div>'+(sub.status==='locked'?'Sudah dikumpulkan oleh '+esc(sub.submittedBy):'Draf oleh '+esc(sub.submittedBy))+'</div></div>'}
+  $('#app').innerHTML=h;
+  $('#bk').onclick=function(){go('course/'+c.id)};
+  document.querySelectorAll('[data-dl]').forEach(function(b){b.onclick=guard(function(){return api('fileAccess',{fileId:b.dataset.dl}).then(function(r){window.open(r.url,'_blank','noopener')})})});
+  document.querySelectorAll('[data-rf]').forEach(function(b){b.onclick=guard(function(){if(!confirm('Hapus berkas ini?'))return;return api('removeFile',{fileId:b.dataset.rf}).then(function(){renderAssignment(a.id)})})});
+  document.querySelectorAll('[data-sl]').forEach(function(b){b.onclick=guard(function(){var v=document.querySelector('[data-lk="'+b.dataset.sl+'"]').value;return api('submitLink',{assignmentId:a.id,slotId:b.dataset.sl,url:v}).then(function(){toast('Tautan tersimpan');renderAssignment(a.id)})})});
+  document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=guard(function(){
+    var slotId=b.dataset.go,box=b.closest('.slot'),inp=box.querySelector('[data-up]'),file=inp.files[0];
+    if(!file)throw new Error('Pilih berkas dulu');
+    var slot=a.slots.filter(function(s){return s.id===slotId})[0];
+    var e=file.name.split('.').pop().toLowerCase(),allowed=String(slot.exts||'').split(/[ ,;]+/).filter(Boolean);
+    if(allowed.length&&allowed.indexOf(e)<0)throw new Error('Jenis .'+e+' tidak diizinkan. Diizinkan: '+allowed.join(', '));
+    if(file.size>slot.maxMB*1048576)throw new Error('Ukuran '+mb(file.size)+' melebihi batas '+slot.maxMB+' MB'+(slot.kind==='video'?'. Untuk video besar, kirim tautan saja.':''));
+    b.disabled=true;
+    return uploadFile(a,slot,file,box).then(function(){toast('Berkas terunggah');renderAssignment(a.id)}).catch(function(er){b.disabled=false;throw er});
+  })});
+  if($('#fs'))$('#fs').onclick=guard(function(){if(!confirm('Kumpulkan dan kunci pengumpulan?'))return;return api('finalSubmit',{assignmentId:a.id}).then(function(){toast('Terkumpul');renderAssignment(a.id)})});
+  if($('#eg'))$('#eg').onclick=guard(function(){return groupForm(a,c,m)});
+}
+
+function retry(fn,n,label){
+  var i=0;
+  return new Promise(function(res,rej){(function t(){fn().then(res).catch(function(e){if(e&&e.noRetry||++i>=n)return rej(e);setTimeout(t,800*i)})})()});
+}
+function uploadFile(a,slot,file,box){
+  var bar=box.querySelector('.bar'),fill=bar.firstElementChild,stEl=box.querySelector('[data-st]');
+  bar.hidden=false;function prog(p,msg){fill.style.width=Math.round(p*100)+'%';stEl.textContent=msg||''}
+  prog(0,'Menyiapkan…');
+  return api('beginUpload',{assignmentId:a.id,slotId:slot.id,filename:file.name,bytes:file.size,mime:file.type||'application/octet-stream'}).then(function(b){
+    return putChunks(b.uploadUrl,file,prog).then(function(driveId){
+      prog(1,'Memfinalisasi…');
+      return retry(function(){return api('finalizeUpload',{uploadToken:b.uploadToken,driveFileId:driveId}).catch(function(e){if(['BAD','LOCKED','CLOSED','FORBIDDEN','DRIVE','NOT_FOUND'].indexOf(e.code)>=0)e.noRetry=true;throw e})},3);
+    }).catch(function(e){api('cancelUpload',{uploadToken:b.uploadToken}).catch(function(){});throw e});
+  });
+}
+// Resumable upload langsung ke Drive, potongan 8 MB (kelipatan 256 KB), dengan pemulihan setelah koneksi putus.
+function putChunks(url,file,prog){
+  var CH=8*1048576,total=file.size,pos=0,fails=0;
+  function queryOffset(){
+    return fetch(url,{method:'PUT',headers:{'Content-Range':'bytes */'+total}}).then(function(r){
+      if(r.status===308){var rg=r.headers.get('Range');return rg?parseInt(rg.split('-')[1],10)+1:0}
+      if(r.status===200||r.status===201)return r.json().then(function(j){return {done:j.id}});
+      throw new Error('Status Drive '+r.status);
+    });
+  }
+  function step(){
+    if(total===0)return Promise.reject(new Error('Berkas kosong'));
+    var end=Math.min(pos+CH,total);
+    return fetch(url,{method:'PUT',headers:{'Content-Range':'bytes '+pos+'-'+(end-1)+'/'+total},body:file.slice(pos,end)}).then(function(r){
+      if(r.status===308){pos=end;fails=0;prog(pos/total,'Mengunggah '+mb(pos)+' / '+mb(total));return step()}
+      if(r.status===200||r.status===201)return r.json().then(function(j){if(!j.id)throw new Error('Drive tidak mengembalikan id');return j.id});
+      throw new Error('Drive menolak potongan ('+r.status+')');
+    }).catch(function(e){
+      if(++fails>5)throw new Error('Koneksi terputus berulang kali. Coba lagi. ('+e.message+')');
+      prog(pos/total,'Koneksi bermasalah, mencoba memulihkan…');
+      return new Promise(function(r){setTimeout(r,1000*fails)}).then(queryOffset).then(function(o){if(o&&o.done)return o.done;pos=o;return step()});
+    });
+  }
+  return step();
+}
+
+function groupForm(a,c,m){
+  return api('listClasses',{courseId:c.id}).then(function(cls){
+    var g=m.group||{name:'',members:[S.user.email],leaderEmail:S.user.email};
+    var mine=S.memberships.filter(function(x){return x.courseId===c.id&&x.role==='student'})[0];
+    var classId=g.classId||(mine?mine.classId:cls[0]&&cls[0].id);
+    var h='<div class="card" style="max-width:560px"><h2>'+(m.group?'Ubah':'Buat')+' kelompok</h2><div class="col"><div><label>Nama kelompok</label><input id="gn" value="'+esc(g.name)+'"></div><div><label>Email anggota (satu per baris, termasuk Anda)</label><textarea id="gm">'+esc(g.members.join('\n'))+'</textarea></div><div><label>Email ketua</label><input id="gl" value="'+esc(g.leaderEmail)+'"></div><div class="row"><button class="pri" id="gs">Simpan</button><button id="gc">Batal</button></div><div class="mut">Semua anggota harus mahasiswa terdaftar di kelas yang sama.</div></div></div>';
+    $('#app').innerHTML=h;$('#gc').onclick=function(){renderAssignment(a.id)};
+    $('#gs').onclick=guard(function(){return api('saveGroup',{assignmentId:a.id,classId:classId,groupId:m.group?m.group.id:'',name:$('#gn').value,members:$('#gm').value.split(/\s+/).filter(Boolean),leaderEmail:$('#gl').value}).then(function(){toast('Kelompok tersimpan');renderAssignment(a.id)})});
+  });
+}
+
+// ---------- Staf / reviewer: tinjau ----------
+function viewReview(a,c,R){
+  var full=!!(R.admin||R.lecturer||R.assistant),lect=!!(R.admin||R.lecturer);
+  return api('listSubmissions',{assignmentId:a.id}).then(function(d){
+    var A=d.assignment,rows=d.rows;
+    var h='<div class="row"><h2 class="grow">'+esc(A.title)+'</h2><button id="bk">Kembali</button></div>';
+    if(lect)h+='<div class="card row"><button id="rel" class="'+(A.gradesReleased?'':'pri')+'">'+(A.gradesReleased?'Tarik kembali nilai':'Rilis nilai ke mahasiswa')+'</button><span class="tag '+(A.gradesReleased?'ok':'warn')+'">'+(A.gradesReleased?'Nilai sudah dirilis':'Nilai belum dirilis')+'</span>'+(A.type==='group'?'<button id="lgf" class="sm">Kunci/buka pembentukan kelompok</button>':'')+'</div>';
+    h+='<div class="card"><div style="overflow:auto"><table><tr><th>'+(lect||full?'<input type="checkbox" id="all" style="width:auto">':'')+'</th><th>Pengumpul</th><th>Status</th><th>Berkas</th><th>Nilai</th><th></th></tr>'+
+     rows.map(function(r){var s=r.submission,fin=(r.grades||[]).filter(function(g){return g.isFinal})[0]||r.myGrade;return '<tr><td>'+(lect?'<input type="checkbox" data-sel="'+esc(s.id)+'" style="width:auto">':'')+'</td><td><b>'+esc(r.owner.name)+'</b><div class="mut">'+esc(r.owner.nim||'')+(r.owner.members?r.owner.members.map(esc).join(', '):'')+'</div></td><td><span class="tag '+(s.status==='locked'?'ok':'warn')+'">'+esc(s.status==='locked'?'terkunci':'draf')+'</span>'+(s.late?' <span class="tag warn">telat</span>':'')+'<div class="mut">'+esc(fmt(s.lockedAt||s.updatedAt))+'</div></td><td>'+s.files.map(function(f){return '<div><span class="link" data-dl="'+esc(f.id)+'">'+esc(f.kind==='link'?'tautan':f.storedName)+'</span>'+(f.kind==='file'?'<div class="mut">asal: '+esc(f.originalName)+'</div>':'')+'</div>'}).join('')+'</td><td>'+(fin?fin.total+' / '+A.maxPoints:'-')+(r.reviewers&&r.reviewers.length?'<div class="mut">'+r.reviewers.map(function(x){return esc(x.email)+' ('+esc(x.role)+')'}).join(', ')+'</div>':'')+'</td><td><button class="sm pri" data-gr="'+esc(s.id)+'">Nilai</button>'+(lect&&s.status==='locked'?' <button class="sm" data-ul="'+esc(s.id)+'">Buka kunci</button>':'')+'</td></tr>'}).join('')+'</table></div></div>';
+    if(lect&&d.missing.length)h+='<div class="card"><h3>Belum mengumpulkan ('+d.missing.length+')</h3><div class="mut">'+d.missing.map(function(x){return esc(x.nim+' '+x.name)}).join(' · ')+'</div></div>';
+    if(lect)h+='<div class="card"><h3>Tugaskan peninjau untuk baris terpilih</h3><div class="row"><input id="re" placeholder="email reviewer/mentor" class="grow"><select id="rr" style="max-width:160px"><option value="reviewer">Reviewer/penguji</option><option value="mentor">Mentor</option></select><label style="margin:0"><input type="checkbox" id="rn" style="width:auto"> kirim email</label><button class="pri" id="rb">Tugaskan</button></div></div>';
+    h+='<div id="gp"></div>';
+    $('#app').innerHTML=h;
+    window._rows=rows;window._A=A;
+    $('#bk').onclick=function(){go('course/'+c.id)};
+    document.querySelectorAll('[data-dl]').forEach(function(b){b.onclick=guard(function(){return api('fileAccess',{fileId:b.dataset.dl}).then(function(r){window.open(r.url,'_blank','noopener')})})});
+    document.querySelectorAll('[data-ul]').forEach(function(b){b.onclick=guard(function(){var why=prompt('Alasan membuka kunci (opsional)')||'';return api('unlockSubmission',{submissionId:b.dataset.ul,reason:why}).then(function(){renderAssignment(a.id,'review')})})});
+    document.querySelectorAll('[data-gr]').forEach(function(b){b.onclick=function(){gradePanel(a,rows.filter(function(r){return r.submission.id===b.dataset.gr})[0],R)}});
+    if($('#all'))$('#all').onchange=function(){document.querySelectorAll('[data-sel]').forEach(function(x){x.checked=$('#all').checked})};
+    if($('#rel'))$('#rel').onclick=guard(function(){return api('setGradesReleased',{assignmentId:a.id,released:!A.gradesReleased}).then(function(){renderAssignment(a.id,'review')})});
+    if($('#lgf'))$('#lgf').onclick=guard(function(){var l=confirm('OK = kunci pembentukan kelompok oleh mahasiswa. Batal = buka kembali.');return api('lockGroupFormation',{assignmentId:a.id,locked:l}).then(function(){toast(l?'Dikunci':'Dibuka')})});
+    if($('#rb'))$('#rb').onclick=guard(function(){var ids=[].map.call(document.querySelectorAll('[data-sel]:checked'),function(x){return x.dataset.sel});if(!ids.length)throw new Error('Pilih minimal satu baris');return api('assignReviewers',{assignmentId:a.id,submissionIds:ids,reviewerEmail:$('#re').value,role:$('#rr').value,notify:$('#rn').checked}).then(function(r){toast(r.assigned+' penugasan dibuat');renderAssignment(a.id,'review')})});
+  });
+}
+function gradePanel(a,row,R){
+  var A=window._A,lect=!!(R.admin||R.lecturer),role=lect?'lecturer':(R.assistant?'assistant':(row.myRole||''));
+  var mentorOnlyNote=role==='mentor'&&!A.mentorGrading;
+  var my=row.myGrade||{scores:[],total:'',feedback:''};
+  var h='<div class="card"><div class="row"><h3 class="grow">Penilaian: '+esc(row.owner.name)+'</h3><button class="sm" id="gx">Tutup</button></div>';
+  if(mentorOnlyNote)h+='<div class="mut">Dosen belum mengaktifkan penilaian oleh mentor untuk tugas ini. Anda dapat memberi catatan.</div>';
+  else if(A.rubric.length)h+=A.rubric.map(function(r){var sc=my.scores.filter(function(x){return x.id===r.id})[0];return '<div class="row slot"><div class="grow"><b>'+esc(r.name)+'</b><div class="mut">'+esc(r.desc||'')+'</div></div><div style="width:110px"><label>Skor (0-'+r.max+')</label><input type="number" min="0" max="'+r.max+'" data-cr="'+esc(r.id)+'" value="'+esc(sc?sc.score:'')+'"></div><div class="grow"><label>Catatan</label><input data-cn="'+esc(r.id)+'" value="'+esc(sc?sc.note:'')+'"></div></div>'}).join('');
+  else h+='<div style="max-width:200px"><label>Nilai (0-'+A.maxPoints+')</label><input id="gt" type="number" value="'+esc(my.total)+'"></div>';
+  h+='<div><label>'+(mentorOnlyNote?'Catatan mentor':'Umpan balik')+'</label><textarea id="gf">'+esc(my.feedback)+'</textarea></div>';
+  if(lect&&(row.grades||[]).length>1)h+='<div class="box" style="margin-top:8px"><b>Nilai dari penilai lain</b>'+row.grades.map(function(g){return '<div class="row"><span>'+esc(g.graderEmail)+' ('+esc(g.graderRole)+'): <b>'+g.total+'</b>'+(g.isFinal?' <span class="tag ok">final</span>':'')+'</span>'+(!g.isFinal?'<button class="sm" data-fin="'+esc(g.id)+'">Jadikan final</button>':'')+'<span class="mut">'+esc(g.feedback)+'</span></div>'}).join('')+'</div>';
+  h+='<div class="row" style="margin-top:8px"><button class="pri" id="gsv">Simpan</button></div></div>';
+  $('#gp').innerHTML=h;$('#gp').scrollIntoView({behavior:'smooth'});
+  $('#gx').onclick=function(){$('#gp').innerHTML=''};
+  document.querySelectorAll('[data-fin]').forEach(function(b){b.onclick=guard(function(){return api('setFinalGrade',{gradeId:b.dataset.fin}).then(function(){renderAssignment(a.id,'review')})})});
+  $('#gsv').onclick=guard(function(){
+    var sid=row.submission.id;
+    if(mentorOnlyNote)return api('mentorNote',{submissionId:sid,feedback:$('#gf').value}).then(function(){toast('Catatan tersimpan');renderAssignment(a.id,'review')});
+    var body={submissionId:sid,feedback:$('#gf').value};
+    if(A.rubric.length)body.scores=A.rubric.map(function(r){var v=document.querySelector('[data-cr="'+r.id+'"]').value;if(v==='')throw new Error('Skor "'+r.name+'" belum diisi');return {id:r.id,score:Number(v),note:document.querySelector('[data-cn="'+r.id+'"]').value}});
+    else body.total=Number($('#gt').value);
+    return api('saveGrade',body).then(function(r){toast('Tersimpan (total '+r.total+')');renderAssignment(a.id,'review')});
+  });
+}
+
+// ---------- Admin ----------
+function renderAdmin(){
+  $('#app').innerHTML='<div class="card"><div class="row"><h2 class="grow">Admin: pengguna</h2><button id="bk">Kembali</button></div><div id="al">Memuat…</div><h3 style="margin-top:14px">Beri peran dosen/admin</h3><div class="row"><input id="ae" placeholder="email" class="grow"><label style="margin:0"><input type="checkbox" id="ad" style="width:auto"> admin</label><label style="margin:0"><input type="checkbox" id="ald" style="width:auto" checked> dosen</label><button class="pri" id="as">Simpan</button></div></div>';
+  $('#bk').onclick=function(){go('')};
+  function load(){return api('listUsers').then(function(us){$('#al').innerHTML='<table><tr><th>Nama</th><th>Email</th><th>NIM/ID</th><th>Peran global</th></tr>'+us.map(function(u){return '<tr><td>'+esc(u.name)+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.nim)+'</td><td>'+esc(u.globalRoles.join(', ')||'-')+'</td></tr>'}).join('')+'</table>'})}
+  guard(load)();
+  $('#as').onclick=guard(function(){var r=[];if($('#ad').checked)r.push('admin');if($('#ald').checked)r.push('lecturer');return api('setGlobalRoles',{email:$('#ae').value,roles:r}).then(function(){toast('Tersimpan');return load()})});
+}
+
+// ---------- Mulai ----------
+var saved=sessionStorage.getItem('st');
+if(saved){S.token=saved;api('me').then(function(d){S.user=d.user;S.courses=d.courses;S.memberships=d.memberships;S.isUkrida=/@ukrida\.ac\.id$/.test(d.user.email);$('#who').textContent=S.user.name+' · '+S.user.email;$('#logout').hidden=false;if(!S.user.nim&&!S.user.globalRoles.length)renderProfile(true);else route()}).catch(function(){S.token=null;renderLogin()})}
+else renderLogin();
+})();
 </script>
 </body>
 </html>
