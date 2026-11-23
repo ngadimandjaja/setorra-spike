@@ -236,11 +236,22 @@ function tabAssignments(c,R,lect){
     list.forEach(function(a){
       var due=a.schedules.map(function(s){return fmt(s.dueAt)}).filter(function(v,i,x){return x.indexOf(v)===i}).join(' / ');
       h+='<div class="card row"><div class="grow"><h3 style="margin:0">'+esc(a.title)+' '+(a.type==='group'?'<span class="tag">kelompok</span>':'<span class="tag">individu</span>')+(a.status!=='published'?' <span class="tag warn">draf</span>':'')+'</h3><div class="mut">Tenggat: '+esc(due||'-')+' · '+a.slots.length+' slot</div></div>'+
-       (lect?'<button class="sm" data-edit="'+esc(a.id)+'">Ubah</button>':'')+'<button class="pri sm" data-as="'+esc(a.id)+'">Buka</button></div>';
+       (lect?'<button class="sm" data-edit="'+esc(a.id)+'">Ubah</button><button class="sm bad" data-del="'+esc(a.id)+'">Hapus</button>':'')+'<button class="pri sm" data-as="'+esc(a.id)+'">Buka</button></div>';
     });
     $('#tb').innerHTML=h;
     window._asg=list;
     document.querySelectorAll('[data-as]').forEach(function(b){b.onclick=function(){go('assignment/'+b.dataset.as)}});
+    document.querySelectorAll('[data-del]').forEach(function(b){b.onclick=guard(function(){
+      var a=list.filter(function(x){return x.id===b.dataset.del})[0];
+      if(!confirm('Hapus tugas "'+a.title+'"?\n\nTugas, jadwal, slot, dan seluruh pengumpulan, berkas, serta nilainya akan hilang dari sistem. Folder di Drive dipindah ke Sampah. Tindakan ini tidak bisa dibatalkan dari Setorra.'))return;
+      function done(r){toast('Tugas dihapus'+(r.submissions?' ('+r.submissions+' pengumpulan ikut terhapus)':''),!!r.driveWarning);if(r.driveWarning)alert(r.driveWarning);route()}
+      return api('deleteAssignment',{assignmentId:a.id}).then(done).catch(function(e){
+        if(e.code!=='CONFIRM')throw e;
+        var t=prompt(e.message+'\n\nJudul tugas: '+a.title);
+        if(t===null)return;
+        return api('deleteAssignment',{assignmentId:a.id,confirmTitle:t}).then(done);
+      });
+    })});
     document.querySelectorAll('[data-edit]').forEach(function(b){b.onclick=guard(function(){return assignmentForm(c,list.filter(function(a){return a.id===b.dataset.edit})[0])})});
     if($('#na'))$('#na').onclick=guard(function(){return assignmentForm(c,null)});
   });
