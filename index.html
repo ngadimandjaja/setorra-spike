@@ -129,10 +129,64 @@ function route(){
 $('#home').onclick=function(){go('')};
 $('#logout').onclick=function(){S.token=null;S.user=null;sessionStorage.removeItem('st');if(window.google&&google.accounts)google.accounts.id.disableAutoSelect();renderLogin()};
 
+// ---------- Dashboard mahasiswa ----------
+var DASH={rows:null,filter:'all',course:''};
+var DST={ontime:['Tepat waktu','ok'],late:['Terlambat','warn'],draft:['Draf, belum dikunci','warn'],pending:['Belum dikumpulkan',''],pending_late:['Belum dikumpulkan (lewat tenggat, masih diterima)','bad'],missed:['Tidak mengumpulkan','bad'],upcoming:['Belum dibuka',''],nogroup:['Belum punya kelompok','warn']};
+function fmtWIB(iso){if(!iso)return '-';var d=new Date(iso);return isNaN(d)?'-':d.toLocaleString('id-ID',{timeZone:'Asia/Jakarta',dateStyle:'medium',timeStyle:'short'})+' WIB'}
+function durTxt(min){min=Math.max(0,Math.round(min));var d=Math.floor(min/1440),h=Math.floor(min%1440/60),m=min%60;return d?d+' hari '+h+' jam':(h?h+' jam '+m+' mnt':m+' mnt')}
+function relDue(iso){if(!iso)return '';var ms=new Date(iso).getTime()-Date.now();if(isNaN(ms))return '';return ms>=0?'sisa '+durTxt(ms/60000):'lewat '+durTxt(-ms/60000)}
+function dashNeeds(r){return ['pending','pending_late','draft','nogroup'].indexOf(r.status)>=0}
+function dashMatch(r,f){return f==='all'?true:f==='needs'?dashNeeds(r):f==='done'?(r.status==='ontime'||r.status==='late'):f===r.status}
+function dashSort(a,b){
+  function rank(r){return dashNeeds(r)?0:(r.status==='upcoming'?1:2)}
+  var ra=rank(a),rb=rank(b);if(ra!==rb)return ra-rb;
+  var da=new Date(a.dueAt).getTime()||0,db=new Date(b.dueAt).getTime()||0;
+  return ra===2?db-da:da-db;
+}
+function drawDash(){
+  var box=$('#dash');if(!box)return;var rows=DASH.rows||[];
+  var courses={};rows.forEach(function(r){courses[r.courseId]=(r.courseCode?r.courseCode+' · ':'')+r.courseName});
+  var scoped=rows.filter(function(r){return !DASH.course||r.courseId===DASH.course});
+  function cnt(f){return scoped.filter(function(r){return dashMatch(r,f)}).length}
+  var chips=[['all','Semua'],['needs','Perlu tindakan'],['ontime','Tepat waktu'],['late','Terlambat'],['missed','Tidak mengumpulkan'],['upcoming','Belum dibuka']];
+  var h='<div class="card"><div class="row"><h3 class="grow">Tugas saya</h3>'+(Object.keys(courses).length>1?'<select id="dc" style="max-width:260px"><option value="">Semua mata kuliah</option>'+Object.keys(courses).map(function(k){return '<option value="'+esc(k)+'"'+(DASH.course===k?' selected':'')+'>'+esc(courses[k])+'</option>'}).join('')+'</select>':'')+'<button class="sm" id="dr">Segarkan</button></div>';
+  h+='<div class="row" style="margin:8px 0">'+chips.map(function(c){return '<button class="sm'+(DASH.filter===c[0]?' pri':'')+'" data-df="'+c[0]+'">'+c[1]+' ('+cnt(c[0])+')</button>'}).join('')+'</div>';
+  var list=scoped.filter(function(r){return dashMatch(r,DASH.filter)}).sort(dashSort);
+  if(!list.length)h+='<div class="mut">'+(rows.length?'Tidak ada tugas pada filter ini.':'Belum ada tugas yang terbit untuk kelas Anda.')+'</div>';
+  else h+='<div style="overflow:auto"><table><tr><th>Tugas</th><th>Tenggat</th><th>Status</th><th>Waktu pengumpulan</th><th>Nilai</th><th></th></tr>'+list.map(function(r){
+    var st=DST[r.status]||[r.status,''],soon=dashNeeds(r)&&r.status!=='pending_late'&&new Date(r.dueAt).getTime()-Date.now()<172800000&&new Date(r.dueAt).getTime()>Date.now();
+    var when='-';
+    if(r.status==='ontime')when=esc(fmtWIB(r.submittedAt));
+    else if(r.status==='late')when=esc(fmtWIB(r.submittedAt))+'<div class="mut">terlambat '+esc(durTxt(r.lateMinutes))+'</div>';
+    else if(r.hasDraft)when='<span class="mut">belum dikunci; berkas terunggah: '+r.fileCount+(r.updatedAt?', diubah '+esc(fmtWIB(r.updatedAt)):'')+'</span>';
+    var note='';
+    if(r.status==='missed'&&r.hasDraft)note='<div class="mut">Ada draf berkas, tetapi tidak dikunci sebelum tenggat.</div>';
+    if(r.group)note+='<div class="mut">Kelompok: '+esc(r.group.name)+(r.canSubmit?'':' (hanya ketua yang mengumpulkan)')+'</div>';
+    var due=['ontime','late'].indexOf(r.status)>=0?'':'<div class="mut'+(soon?' err':'')+'">'+esc(relDue(r.dueAt))+'</div>';
+    var g=r.grade?'<b>'+r.grade.total+'</b> / '+r.grade.max:(r.gradesReleased?'-':'<span class="mut">belum dirilis</span>');
+    var act=(r.windowOpen&&r.status!=='ontime'&&r.status!=='late'&&r.canSubmit)?'Kumpulkan':'Lihat';
+    return '<tr><td><a href="#assignment/'+esc(r.assignmentId)+'"><b>'+esc(r.title)+'</b></a><div class="mut">'+esc(r.courseCode||r.courseName)+' · kelas '+esc(r.className)+' · '+(r.type==='group'?'kelompok':'individu')+'</div>'+note+'</td><td>'+esc(fmtWIB(r.dueAt))+due+'</td><td><span class="tag '+st[1]+'">'+esc(st[0])+'</span></td><td>'+when+'</td><td>'+g+'</td><td><button class="sm'+(act==='Kumpulkan'?' pri':'')+'" data-dg="'+esc(r.assignmentId)+'">'+act+'</button></td></tr>';
+  }).join('')+'</table></div><div class="mut" style="margin-top:6px">Waktu ditampilkan dalam WIB. "Tepat waktu" dan "Terlambat" dihitung dari saat Anda menekan <b>Kumpulkan &amp; kunci</b>, bukan saat berkas diunggah.</div>';
+  h+='</div>';
+  box.innerHTML=h;
+  document.querySelectorAll('[data-df]').forEach(function(b){b.onclick=function(){DASH.filter=b.dataset.df;drawDash()}});
+  document.querySelectorAll('[data-dg]').forEach(function(b){b.onclick=function(){go('assignment/'+b.dataset.dg)}});
+  if($('#dc'))$('#dc').onchange=function(){DASH.course=this.value;drawDash()};
+  $('#dr').onclick=function(){loadDash()};
+}
+function loadDash(){
+  var box=$('#dash');if(!box)return Promise.resolve();
+  if(!DASH.rows)box.innerHTML='<div class="card mut">Memuat tugas…</div>';
+  return api('myDashboard').then(function(d){DASH.rows=d.rows;drawDash()}).catch(function(e){box.innerHTML='<div class="card err">Gagal memuat tugas: '+esc(e.message||e)+' <button class="sm" id="dr">Coba lagi</button></div>';$('#dr').onclick=function(){loadDash()}});
+}
+
 // ---------- Home ----------
 function renderHome(){
-  var h='<div class="row" style="margin-bottom:10px"><h2 class="grow">Mata kuliah</h2><button id="bprof">Profil</button><button id="brev">Tugas peninjauan</button>'+(isAdmin()?'<button id="badm">Admin</button>':'')+(isLecturer()?'<button class="pri" id="bnew">+ Mata kuliah</button>':'')+'</div>';
+  var h='<div class="row" style="margin-bottom:10px"><h2 class="grow">Beranda</h2><button id="bprof">Profil</button><button id="brev">Tugas peninjauan</button>'+(isAdmin()?'<button id="badm">Admin</button>':'')+(isLecturer()?'<button class="pri" id="bnew">+ Mata kuliah</button>':'')+'</div>';
+  var isStu=S.memberships.some(function(m){return m.role==='student'});
+  if(isStu)h+='<div id="dash"></div>';
   if(!S.courses.length)h+='<div class="card mut">Belum ada mata kuliah. Masukkan kode kelas dari dosen di bawah.</div>';
+  if(S.courses.length)h+='<h3 style="margin:14px 0 8px">Mata kuliah</h3>';
   S.courses.forEach(function(c){
     var roles=S.memberships.filter(function(m){return m.courseId===c.id}).map(function(m){return m.role});
     if(c.ownerEmail===S.user.email)roles.unshift('dosen');
@@ -140,6 +194,7 @@ function renderHome(){
   });
   h+='<div class="card"><h3>Gabung kelas dengan kode</h3><div class="row"><input id="jc" placeholder="Kode kelas (6 karakter)" style="max-width:220px;text-transform:uppercase"><input id="jn" placeholder="'+(S.isUkrida?'NIM':'NIM/ID')+'" value="'+esc(S.user.nim)+'" style="max-width:200px"><button id="bj" class="pri">Gabung</button></div></div>';
   $('#app').innerHTML=h;
+  if(isStu){DASH.rows=null;loadDash()}
   document.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){go('course/'+b.dataset.open)}});
   $('#bprof').onclick=function(){go('profile')};$('#brev').onclick=function(){go('reviews')};
   if($('#badm'))$('#badm').onclick=function(){go('admin')};
