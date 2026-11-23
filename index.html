@@ -207,13 +207,17 @@ function renderProfile(first){
    '<div><label>'+(isUk?'NIM':'NIM atau ID lain (mis. NIK/NIP/nomor peserta)')+'</label><input id="pm" value="'+esc(S.user.nim)+'"></div>'+
    '<div><label>Institusi</label><input id="pi" value="'+esc(S.user.institution)+'"></div>'+
    '<div class="row"><button class="pri" id="psave">Simpan</button>'+(first?'':'<button id="pback">Kembali</button>')+'</div></div></div>';
-  $('#psave').onclick=guard(function(){return api('updateProfile',{name:$('#pn').value,nim:$('#pm').value,institution:$('#pi').value}).then(function(){toast('Tersimpan');return boot()})});
-  if($('#pback'))$('#pback').onclick=function(){route()};
+  $('#psave').onclick=guard(function(){return api('updateProfile',{name:$('#pn').value,nim:$('#pm').value,institution:$('#pi').value}).then(function(){
+    toast('Profil berhasil disimpan');
+    if(first)return boot();
+    return api('me').then(function(d){S.user=d.user;S.courses=d.courses;S.memberships=d.memberships;$('#who').textContent=S.user.name+' · '+S.user.email;go(S.prev||'')});
+  })});
+  if($('#pback'))$('#pback').onclick=function(){go(S.prev||'')};
 }
 
 // ---------- Router ----------
 function go(h){location.hash=h}
-window.addEventListener('hashchange',function(){if(S.token&&S.user)route()});
+window.addEventListener('hashchange',function(e){var o=String((e&&e.oldURL)||'').split('#')[1]||'';S.prev=/^\/?profile/.test(o)?'':o;if(S.token&&S.user)route()});
 function route(){
   var h=location.hash.replace(/^#\/?/,'').split('/');
   var v=h[0]||'';
