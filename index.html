@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setorra — Spike Teknis v2</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="config.js"></script>
+  <style>
+    :root { --ink:#1f2328; --muted:#5b6470; --line:#d8dde3; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; --accent:#0b5cad; }
+    * { box-sizing: border-box; }
+    body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); margin: 0; background:#f6f8fa; }
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    h2 { font-size: 17px; margin: 0 0 8px; }
+    p.lead { color: var(--muted); margin: 0 0 20px; }
+    section { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; }
+    button { font:inherit; padding:8px 14px; border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+    button.secondary { background:#fff; color:var(--accent); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    input[type=number] { width:90px; padding:6px; font:inherit; }
+    input[type=text] { width:100%; padding:6px; font:13px ui-monospace, Menlo, Consolas, monospace; }
+    code, pre { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { background:#f6f8fa; border:1px solid var(--line); border-radius:6px; padding:10px; overflow:auto; max-height:320px; white-space:pre-wrap; word-break:break-all; }
+    .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); } .muted { color:var(--muted); }
+    .hint { color:var(--muted); font-size:13px; }
+    progress { width: 260px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Setorra — spike teknis v2</h1>
+  <p class="lead">Frontend statis + backend Apps Script. Jalankan tes berurutan, lalu salin hasilnya.</p>
+
+  <section>
+    <h2>Konfigurasi</h2>
+    <div class="hint">Origin halaman ini: <code id="origin"></code></div>
+    <label class="hint">URL backend (Apps Script /exec)</label>
+    <input type="text" id="backendUrl">
+    <div class="row"><button class="secondary" id="btnPing">Cek backend</button><span id="pingOut" class="muted"></span></div>
+  </section>
+
+  <section>
+    <h2>Tes 1: login Google</h2>
+    <div id="gisStatus" class="muted">Memuat tombol login...</div>
+    <div id="gisButton" style="margin:10px 0"></div>
+    <pre id="loginOut" class="muted">Belum login.</pre>
+    <div class="hint">Lulus jika email muncul dan <code>ok</code> = true. Uji dengan akun @ukrida dan Gmail lain.</div>
+  </section>
+
+  <section>
+    <h2>Tes 2: upload</h2>
+    <input type="file" id="berkas">
+    <div class="row">
+      <button id="btnA">Cara A: base64 lewat fetch</button>
+      <button class="secondary" id="btnB">Cara B: langsung ke sesi resumable Drive</button>
+    </div>
+    <div class="row"><progress id="prog" value="0" max="100"></progress><span id="upTimer" class="muted"></span></div>
+    <pre id="upOut" class="muted">Belum dijalankan.</pre>
+    <div class="hint">Perlu login dulu. Uji 10, 25, 40, 48 MB, lalu satu video di atas 100 MB dengan Cara B.</div>
+  </section>
+
+  <section>
+    <h2>Tes 3: eksekusi bersamaan</h2>
+    <div class="row">
+      <label>Panggilan <input type="number" id="nCalls" value="40" min="1" max="120"></label>
+      <label>Tahan (detik) <input type="number" id="holdSec" value="5" min="1" max="25"></label>
+      <button id="btnConc">Jalankan</button>
+      <span id="concTimer" class="muted"></span>
+    </div>
+    <pre id="concOut" class="muted">Belum dijalankan.</pre>
+    <div class="hint">Ulangi dari 3–4 perangkat yang menekan "Jalankan" bersamaan.</div>
+  </section>
+
+  <section>
+    <h2>Ringkasan</h2>
+    <div class="row"><button id="btnCopy">Salin semua hasil</button><span id="copyMsg" class="muted"></span></div>
+    <pre id="summary" class="muted">{}</pre>
+  </section>
+</main>
+
+<script>
+  var CFG = window.SETORRA_CONFIG || {};
+  var qs = new URLSearchParams(location.search);
+  var CLIENT_ID = qs.get('cid') || CFG.clientId || '';
+  var SESSION = null;
+  var RESULTS = { origin: location.origin, userAgent: navigator.userAgent, startedAt: new Date().toISOString() };
+
+  function $(id) { return document.getElementById(id); }
+  function show(id, obj, cls) { var el = $(id); el.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); el.className = cls || ''; }
+  function record(key, value, append) {
+    if (append) { (RESULTS[key] = RESULTS[key] || []).push(value); } else { RESULTS[key] = value; }
+    show('summary', RESULTS);
+  }
+  function timer(id) { var t0 = Date.now(); var h = setInterval(function () { $(id).textContent = ((Date.now() - t0) / 1000).toFixed(1) + ' detik'; }, 200); return function () { clearInterval(h); return Date.now() - t0; }; }
+  function mb(n) { return Math.round(n / 1048576 * 100) / 100; }
+
+  $('origin').textContent = location.origin;
+  $('backendUrl').value = qs.get('b') || CFG.backendUrl || '';
+  show('summary', RESULTS);
+
+  /* Panggil backend: text/plain agar tidak ada preflight CORS */
+  function api(payload) {
+    return fetch($('backendUrl').value.trim(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    }).then(function (r) {
+      return r.text().then(function (t) {
+        try { return JSON.parse(t); } catch (e) { return { ok: false, httpStatus: r.status, error: 'respon_bukan_json', snippet: t.slice(0, 200) }; }
+      });
+    });
+  }
+
+  $('btnPing').onclick = function () {
+    show('pingOut', 'Menghubungi...', 'muted');
+    var t0 = Date.now();
+    api({ action: 'ping' }).then(function (r) { r.ms = Date.now() - t0; show('pingOut', r.ok ? 'Backend hidup (' + r.ms + ' ms)' : JSON.stringify(r), r.ok ? 'ok' : 'bad'); record('ping', r); })
+      .catch(function (e) { show('pingOut', 'Gagal: ' + e, 'bad'); record('ping', { error: String(e) }); });
+  };
+
+  /* Tes 1 */
+  function initGis() {
+    if (!CLIENT_ID) { show('gisStatus', 'Client ID belum diatur (config.js atau ?cid=).', 'bad'); return; }
+    if (!window.google || !google.accounts || !google.accounts.id) { show('gisStatus', 'Library login Google gagal dimuat.', 'bad'); return; }
+    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential, auto_select: false });
+    google.accounts.id.renderButton($('gisButton'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'id' });
+    show('gisStatus', 'Tombol siap.', 'muted');
+  }
+  function onCredential(resp) {
+    show('loginOut', 'Memverifikasi di backend...', 'muted');
+    api({ action: 'login', idToken: resp.credential }).then(function (r) {
+      if (r.ok) SESSION = r.sessionToken;
+      var view = Object.assign({}, r); if (view.sessionToken) view.sessionToken = '(tersimpan)';
+      show('loginOut', view, r.ok ? 'ok' : 'bad'); record('tes1_login', view);
+    }).catch(function (e) { show('loginOut', String(e), 'bad'); record('tes1_login', { error: String(e) }); });
+  }
+  window.addEventListener('load', function () { setTimeout(initGis, 600); });
+
+  /* Tes 2 */
+  function pickFile() {
+    if (!SESSION) { show('upOut', 'Login dulu (Tes 1).', 'warn'); return null; }
+    var f = $('berkas').files[0];
+    if (!f) { show('upOut', 'Pilih file dulu.', 'warn'); return null; }
+    return f;
+  }
+  function busy(on) { $('btnA').disabled = on; $('btnB').disabled = on; }
+
+  $('btnA').onclick = function () {
+    var f = pickFile(); if (!f) return;
+    busy(true); $('prog').removeAttribute('value');
+    show('upOut', 'Cara A: membaca dan mengirim ' + mb(f.size) + ' MB...', 'muted');
+    var stop = timer('upTimer');
+    var reader = new FileReader();
+    reader.onload = function () {
+      api({ action: 'uploadA', session: SESSION, name: f.name, mime: f.type, data: String(reader.result).split(',')[1] })
+        .then(function (r) { r.clientMs = stop(); r.fileMB = mb(f.size); finishUp(r, 'tes2A'); })
+        .catch(function (e) { finishUp({ ok: false, fileMB: mb(f.size), clientMs: stop(), error: String(e) }, 'tes2A'); });
+    };
+    reader.readAsDataURL(f);
+  };
+
+  $('btnB').onclick = function () {
+    var f = pickFile(); if (!f) return;
+    busy(true); $('prog').value = 0;
+    show('upOut', 'Cara B: meminta sesi upload...', 'muted');
+    var stop = timer('upTimer');
+    api({ action: 'initB', session: SESSION, name: f.name, mime: f.type || 'application/octet-stream', size: f.size, origin: location.origin })
+      .then(function (init) {
+        if (!init.ok) throw new Error('initB gagal: ' + JSON.stringify(init));
+        show('upOut', 'Cara B: mengunggah langsung ke Drive...', 'muted');
+        return putChunks(init.uploadUrl, f);
+      })
+      .then(function (driveFile) {
+        return api({ action: 'finalizeB', session: SESSION, fileId: driveFile.id, clientMs: Date.now() });
+      })
+      .then(function (r) { r.clientMs = stop(); r.fileMB = mb(f.size); finishUp(r, 'tes2B'); })
+      .catch(function (e) { finishUp({ ok: false, fileMB: mb(f.size), clientMs: stop(), error: String(e) }, 'tes2B'); });
+  };
+
+  /* Unggah per potongan 8 MB (kelipatan 256 KB) ke URL sesi resumable */
+  function putChunks(url, file) {
+    var CHUNK = 8 * 1024 * 1024;
+    return new Promise(function (resolve, reject) {
+      function send(start) {
+        var end = Math.min(start + CHUNK, file.size);
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Range', 'bytes ' + start + '-' + (end - 1) + '/' + file.size);
+        xhr.upload.onprogress = function (ev) { if (ev.lengthComputable) $('prog').value = Math.round((start + ev.loaded) / file.size * 100); };
+        xhr.onload = function () {
+          if (xhr.status === 308) {
+            var range = xhr.getResponseHeader('Range');
+            var next = range ? Number(range.split('-')[1]) + 1 : end;
+            send(next);
+          } else if (xhr.status === 200 || xhr.status === 201) {
+            try { resolve(JSON.parse(xhr.responseText)); } catch (e) { reject(new Error('respon Drive tidak terbaca')); }
+          } else {
+            reject(new Error('PUT gagal: HTTP ' + xhr.status + ' ' + xhr.responseText.slice(0, 200)));
+          }
+        };
+        xhr.onerror = function () { reject(new Error('PUT diblokir (kemungkinan CORS) atau jaringan putus')); };
+        xhr.send(file.slice(start, end));
+      }
+      send(0);
+    });
+  }
+
+  function finishUp(r, key) {
+    busy(false); $('prog').value = r.ok ? 100 : 0;
+    show('upOut', r, r.ok ? 'ok' : 'bad'); record(key, r, true);
+  }
+
+  /* Tes 3 */
+  $('btnConc').onclick = function () {
+    var n = Math.max(1, Math.min(120, parseInt($('nCalls').value, 10) || 40));
+    var hold = Math.max(1, Math.min(25, parseInt($('holdSec').value, 10) || 5)) * 1000;
+    var ok = 0, fail = 0, errors = {}, ms = [];
+    $('btnConc').disabled = true; show('concOut', 'Mengirim ' + n + ' permintaan...', 'muted');
+    var stop = timer('concTimer');
+    var jobs = [];
+    for (var i = 0; i < n; i++) {
+      jobs.push(api({ action: 'probe', i: i, holdMs: hold }).then(function (r) {
+        if (r.ok) { ok++; ms.push(r.serverMs); } else { fail++; var k = String(r.error || r.snippet).slice(0, 120); errors[k] = (errors[k] || 0) + 1; }
+      }).catch(function (e) { fail++; var k = String(e).slice(0, 120); errors[k] = (errors[k] || 0) + 1; }));
+    }
+    Promise.all(jobs).then(function () {
+      var total = stop(); $('btnConc').disabled = false; ms.sort(function (a, b) { return a - b; });
+      var r = { panggilan: n, tahanDetik: hold / 1000, berhasil: ok, gagal: fail, totalDetik: +(total / 1000).toFixed(1), serverMsMedian: ms.length ? ms[Math.floor(ms.length / 2)] : null, pesanError: errors };
+      show('concOut', r, fail === 0 ? 'ok' : 'bad'); record('tes3', r, true);
+    });
+  };
+
+  $('btnCopy').onclick = function () {
+    var text = JSON.stringify(RESULTS, null, 2);
+    navigator.clipboard.writeText(text).then(function () { $('copyMsg').textContent = 'Tersalin.'; }, function () { $('copyMsg').textContent = 'Gagal menyalin; salin manual dari kotak di bawah.'; });
+  };
+</script>
+</body>
+</html>
